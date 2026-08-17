@@ -1,22 +1,37 @@
 package sunrisedentalsystem.model;
 
+import java.time.LocalDate;
+
 public class Bill {
 
     private int billId;
+    private int appointmentNo;
+    private int generatedByStaffId;
     private double consultationFee;
     private double treatmentCost;
     private double totalAmount;
+    private LocalDate generatedDate;
 
     public Bill() {
     }
 
-    public Bill(int billId, double consultationFee, double treatmentCost) {
+    public Bill(int billId,
+                int appointmentNo,
+                int generatedByStaffId,
+                double consultationFee,
+                double treatmentCost,
+                LocalDate generatedDate) {
+
         this.billId = billId;
+        this.appointmentNo = appointmentNo;
+        this.generatedByStaffId = generatedByStaffId;
         this.consultationFee = consultationFee;
         this.treatmentCost = treatmentCost;
+        this.generatedDate = generatedDate;
+
+        calculateTotal();
     }
-    
-    // calculate bill is implemented
+
     public double calculateTotal() {
         totalAmount = consultationFee + treatmentCost;
         return totalAmount;
@@ -28,6 +43,22 @@ public class Bill {
 
     public void setBillId(int billId) {
         this.billId = billId;
+    }
+
+    public int getAppointmentNo() {
+        return appointmentNo;
+    }
+
+    public void setAppointmentNo(int appointmentNo) {
+        this.appointmentNo = appointmentNo;
+    }
+
+    public int getGeneratedByStaffId() {
+        return generatedByStaffId;
+    }
+
+    public void setGeneratedByStaffId(int generatedByStaffId) {
+        this.generatedByStaffId = generatedByStaffId;
     }
 
     public double getConsultationFee() {
@@ -48,5 +79,17 @@ public class Bill {
 
     public double getTotalAmount() {
         return totalAmount;
+    }
+
+    public void setTotalAmount(double totalAmount) {
+        this.totalAmount = totalAmount;
+    }
+
+    public LocalDate getGeneratedDate() {
+        return generatedDate;
+    }
+
+    public void setGeneratedDate(LocalDate generatedDate) {
+        this.generatedDate = generatedDate;
     }
 }

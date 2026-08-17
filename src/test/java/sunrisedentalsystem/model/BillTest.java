@@ -1,10 +1,8 @@
-package sunrisedentalsystem;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
+package sunrisedentalsystem.model;
 
 import org.junit.jupiter.api.Test;
 
-import sunrisedentalsystem.model.Bill;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class BillTest {
 
@@ -34,4 +32,3 @@ class BillTest {
         assertEquals(3500.00, bill.getTotalAmount(), 0.001);
     }
 }
-
