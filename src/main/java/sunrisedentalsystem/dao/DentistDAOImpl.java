@@ -14,19 +14,76 @@ import sunrisedentalsystem.util.DatabaseConnection;
 public class DentistDAOImpl implements DentistDAO {
 
     @Override
+    public boolean addDentist(Dentist dentist)
+            throws SQLException {
+
+        String sql =
+                "INSERT INTO dentist "
+                + "(dentist_name, specialization, contact_number) "
+                + "VALUES (?, ?, ?)";
+
+        try (Connection connection =
+                     DatabaseConnection.getConnection();
+
+             PreparedStatement statement =
+                     connection.prepareStatement(
+                             sql,
+                             Statement.RETURN_GENERATED_KEYS
+                     )) {
+
+            statement.setString(
+                    1,
+                    dentist.getDentistName()
+            );
+
+            statement.setString(
+                    2,
+                    dentist.getSpecialization()
+            );
+
+            statement.setString(
+                    3,
+                    dentist.getContactNumber()
+            );
+
+            int rowsAffected =
+                    statement.executeUpdate();
+
+            if (rowsAffected > 0) {
+
+                try (ResultSet generatedKeys =
+                             statement.getGeneratedKeys()) {
+
+                    if (generatedKeys.next()) {
+
+                        dentist.setDentistId(
+                                generatedKeys.getInt(1)
+                        );
+                    }
+                }
+
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    @Override
     public Dentist getDentistById(int dentistId)
             throws SQLException {
 
         String sql =
-                "SELECT dentist_id, dentist_name " +
-                "FROM dentist " +
-                "WHERE dentist_id = ?";
+                "SELECT dentist_id, dentist_name, "
+                + "specialization, contact_number "
+                + "FROM dentist "
+                + "WHERE dentist_id = ?";
 
         try (Connection connection =
-                DatabaseConnection.getConnection();
+                     DatabaseConnection.getConnection();
 
              PreparedStatement statement =
-                connection.prepareStatement(sql)) {
+                     connection.prepareStatement(sql)) {
 
             statement.setInt(
                     1,
@@ -34,7 +91,7 @@ public class DentistDAOImpl implements DentistDAO {
             );
 
             try (ResultSet resultSet =
-                    statement.executeQuery()) {
+                         statement.executeQuery()) {
 
                 if (resultSet.next()) {
 
@@ -44,6 +101,12 @@ public class DentistDAOImpl implements DentistDAO {
                             ),
                             resultSet.getString(
                                     "dentist_name"
+                            ),
+                            resultSet.getString(
+                                    "specialization"
+                            ),
+                            resultSet.getString(
+                                    "contact_number"
                             )
                     );
                 }
@@ -61,18 +124,19 @@ public class DentistDAOImpl implements DentistDAO {
                 new ArrayList<>();
 
         String sql =
-                "SELECT dentist_id, dentist_name " +
-                "FROM dentist " +
-                "ORDER BY dentist_name";
+                "SELECT dentist_id, dentist_name, "
+                + "specialization, contact_number "
+                + "FROM dentist "
+                + "ORDER BY dentist_name";
 
         try (Connection connection =
-                DatabaseConnection.getConnection();
+                     DatabaseConnection.getConnection();
 
              Statement statement =
-                connection.createStatement();
+                     connection.createStatement();
 
              ResultSet resultSet =
-                statement.executeQuery(sql)) {
+                     statement.executeQuery(sql)) {
 
             while (resultSet.next()) {
 
@@ -83,6 +147,12 @@ public class DentistDAOImpl implements DentistDAO {
                                 ),
                                 resultSet.getString(
                                         "dentist_name"
+                                ),
+                                resultSet.getString(
+                                        "specialization"
+                                ),
+                                resultSet.getString(
+                                        "contact_number"
                                 )
                         );
 
@@ -91,5 +161,69 @@ public class DentistDAOImpl implements DentistDAO {
         }
 
         return dentists;
+    }
+
+    @Override
+    public boolean updateDentist(Dentist dentist)
+            throws SQLException {
+
+        String sql =
+                "UPDATE dentist "
+                + "SET dentist_name = ?, "
+                + "specialization = ?, "
+                + "contact_number = ? "
+                + "WHERE dentist_id = ?";
+
+        try (Connection connection =
+                     DatabaseConnection.getConnection();
+
+             PreparedStatement statement =
+                     connection.prepareStatement(sql)) {
+
+            statement.setString(
+                    1,
+                    dentist.getDentistName()
+            );
+
+            statement.setString(
+                    2,
+                    dentist.getSpecialization()
+            );
+
+            statement.setString(
+                    3,
+                    dentist.getContactNumber()
+            );
+
+            statement.setInt(
+                    4,
+                    dentist.getDentistId()
+            );
+
+            return statement.executeUpdate() > 0;
+        }
+    }
+
+    @Override
+    public boolean deleteDentist(int dentistId)
+            throws SQLException {
+
+        String sql =
+                "DELETE FROM dentist "
+                + "WHERE dentist_id = ?";
+
+        try (Connection connection =
+                     DatabaseConnection.getConnection();
+
+             PreparedStatement statement =
+                     connection.prepareStatement(sql)) {
+
+            statement.setInt(
+                    1,
+                    dentistId
+            );
+
+            return statement.executeUpdate() > 0;
+        }
     }
 }
