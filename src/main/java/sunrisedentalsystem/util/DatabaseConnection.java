@@ -12,6 +12,14 @@ public class DatabaseConnection {
     private static final Properties properties = new Properties();
 
     static {
+        try {
+            Class.forName("com.mysql.cj.jdbc.Driver");
+
+        } catch (ClassNotFoundException e) {
+            throw new RuntimeException(
+                    "MySQL JDBC Driver not found.", e);
+        }
+
         try (InputStream input =
                 DatabaseConnection.class
                         .getClassLoader()
