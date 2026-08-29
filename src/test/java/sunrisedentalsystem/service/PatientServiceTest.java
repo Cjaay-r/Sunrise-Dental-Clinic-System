@@ -5,6 +5,8 @@ import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -85,5 +87,41 @@ class PatientServiceTest {
 
         verify(patientDAO)
                 .getPatientById(patientId);
+    }
+    
+    @Test
+    void shouldSearchPatientByContactNumber()
+            throws Exception {
+
+        Patient patient = new Patient(
+                5,
+                "Nimal Perera",
+                "Kandy",
+                "0771234567"
+        );
+
+        when(
+            patientDAO.getPatientByContactNumber(
+                    "0771234567"
+            )
+        ).thenReturn(patient);
+
+        Patient result =
+                patientService
+                        .searchPatientByContactNumber(
+                                "0771234567"
+                        );
+
+        assertNotNull(result);
+
+        assertEquals(
+                "0771234567",
+                result.getContactNumber()
+        );
+
+        verify(patientDAO)
+                .getPatientByContactNumber(
+                        "0771234567"
+                );
     }
 }

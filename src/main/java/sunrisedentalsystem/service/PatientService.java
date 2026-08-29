@@ -11,4 +11,8 @@ public interface PatientService {
 
     Patient searchPatient(
             int patientId) throws SQLException;
+    
+    Patient searchPatientByContactNumber(
+            String contactNumber)
+            throws SQLException;
 }

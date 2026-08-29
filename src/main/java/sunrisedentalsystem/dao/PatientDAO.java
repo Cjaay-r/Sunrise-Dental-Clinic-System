@@ -9,4 +9,7 @@ public interface PatientDAO {
     boolean addPatient(Patient patient) throws SQLException;
 
     Patient getPatientById(int patientId) throws SQLException;
+    
+    Patient getPatientByContactNumber(String contactNumber)
+            throws SQLException;
 }

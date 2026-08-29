@@ -84,4 +84,34 @@ class PatientDAOTest {
                 result.getContactNumber()
         );
     }
+    
+    @Test
+    void shouldGetPatientByContactNumber() throws Exception {
+
+        PatientDAO patientDAO = new PatientDAOImpl();
+
+        Patient patient = new Patient(
+                0,
+                "Phone Search Test",
+                "Colombo",
+                "0777654321"
+        );
+
+        patientDAO.addPatient(patient);
+
+        Patient result =
+                patientDAO.getPatientByContactNumber(
+                        "0777654321"
+                );
+
+        assertNotNull(result);
+        assertEquals(
+                "0777654321",
+                result.getContactNumber()
+        );
+        assertEquals(
+                "Phone Search Test",
+                result.getPatientName()
+        );
+    }
 }

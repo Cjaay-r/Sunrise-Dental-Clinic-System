@@ -39,4 +39,15 @@ public class PatientServiceImpl
         return patientDAO
                 .getPatientById(patientId);
     }
+    
+    @Override
+    public Patient searchPatientByContactNumber(
+            String contactNumber)
+            throws SQLException {
+
+        return patientDAO
+                .getPatientByContactNumber(
+                        contactNumber
+                );
+    }
 }
