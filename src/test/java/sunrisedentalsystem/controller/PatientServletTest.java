@@ -3,8 +3,10 @@ package sunrisedentalsystem.controller;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -32,8 +34,11 @@ class PatientServletTest {
     private PatientService patientService;
 
     private HttpServletRequest request;
+
     private HttpServletResponse response;
+
     private HttpSession session;
+
     private RequestDispatcher dispatcher;
 
     private User loggedInUser;
@@ -43,14 +48,23 @@ class PatientServletTest {
     @BeforeEach
     void setUp() {
 
-        patientService = mock(PatientService.class);
+        patientService =
+                mock(PatientService.class);
 
-        request = mock(HttpServletRequest.class);
-        response = mock(HttpServletResponse.class);
-        session = mock(HttpSession.class);
-        dispatcher = mock(RequestDispatcher.class);
+        request =
+                mock(HttpServletRequest.class);
 
-        loggedInUser = mock(User.class);
+        response =
+                mock(HttpServletResponse.class);
+
+        session =
+                mock(HttpSession.class);
+
+        dispatcher =
+                mock(RequestDispatcher.class);
+
+        loggedInUser =
+                mock(User.class);
 
         patientServlet =
                 new PatientServlet(patientService);
@@ -59,6 +73,8 @@ class PatientServletTest {
     @Test
     void shouldRejectPatientWhenRequiredFieldsAreEmpty()
             throws Exception {
+
+        stubLoggedInUser();
 
         when(request.getParameter("patientName"))
                 .thenReturn("");
@@ -73,7 +89,10 @@ class PatientServletTest {
                 "registerPatient.jsp"))
                 .thenReturn(dispatcher);
 
-        patientServlet.doPost(request, response);
+        patientServlet.doPost(
+                request,
+                response
+        );
 
         verify(request).setAttribute(
                 "errorMessage",
@@ -81,9 +100,14 @@ class PatientServletTest {
         );
 
         verify(dispatcher)
-                .forward(request, response);
+                .forward(
+                        request,
+                        response
+                );
 
-        verifyNoInteractions(patientService);
+        verifyNoInteractions(
+                patientService
+        );
     }
 
     @Test
@@ -95,12 +119,19 @@ class PatientServletTest {
         when(request.getSession(false))
                 .thenReturn(null);
 
-        patientServlet.doPost(request, response);
+        patientServlet.doPost(
+                request,
+                response
+        );
 
         verify(response)
-                .sendRedirect("login.jsp");
+                .sendRedirect(
+                        "login.jsp"
+                );
 
-        verifyNoInteractions(patientService);
+        verifyNoInteractions(
+                patientService
+        );
     }
 
     @Test
@@ -108,6 +139,7 @@ class PatientServletTest {
             throws Exception {
 
         stubValidPatientParameters();
+
         stubLoggedInUser();
 
         when(patientService.registerPatient(
@@ -119,17 +151,23 @@ class PatientServletTest {
                 "patientDetails.jsp"))
                 .thenReturn(dispatcher);
 
-        patientServlet.doPost(request, response);
+        patientServlet.doPost(
+                request,
+                response
+        );
 
         ArgumentCaptor<Patient> captor =
-                ArgumentCaptor.forClass(Patient.class);
+                ArgumentCaptor.forClass(
+                        Patient.class
+                );
 
         verify(patientService)
                 .registerPatient(
                         captor.capture()
                 );
 
-        Patient patient = captor.getValue();
+        Patient patient =
+                captor.getValue();
 
         assertNotNull(patient);
 
@@ -159,7 +197,10 @@ class PatientServletTest {
         );
 
         verify(dispatcher)
-                .forward(request, response);
+                .forward(
+                        request,
+                        response
+                );
     }
 
     @Test
@@ -167,6 +208,7 @@ class PatientServletTest {
             throws Exception {
 
         stubValidPatientParameters();
+
         stubLoggedInUser();
 
         when(patientService.registerPatient(
@@ -177,7 +219,10 @@ class PatientServletTest {
                 "registerPatient.jsp"))
                 .thenReturn(dispatcher);
 
-        patientServlet.doPost(request, response);
+        patientServlet.doPost(
+                request,
+                response
+        );
 
         verify(request).setAttribute(
                 "errorMessage",
@@ -185,14 +230,20 @@ class PatientServletTest {
         );
 
         verify(dispatcher)
-                .forward(request, response);
+                .forward(
+                        request,
+                        response
+                );
     }
 
     @Test
     void shouldDisplayPatientWhenPatientExists()
             throws Exception {
 
-        Patient patient = mock(Patient.class);
+        stubLoggedInUser();
+
+        Patient patient =
+                mock(Patient.class);
 
         when(request.getParameter("patientId"))
                 .thenReturn("5");
@@ -204,7 +255,10 @@ class PatientServletTest {
                 "patientDetails.jsp"))
                 .thenReturn(dispatcher);
 
-        patientServlet.doGet(request, response);
+        patientServlet.doGet(
+                request,
+                response
+        );
 
         verify(patientService)
                 .searchPatient(5);
@@ -215,12 +269,17 @@ class PatientServletTest {
         );
 
         verify(dispatcher)
-                .forward(request, response);
+                .forward(
+                        request,
+                        response
+                );
     }
 
     @Test
     void shouldShowErrorWhenPatientDoesNotExist()
             throws Exception {
+
+        stubLoggedInUser();
 
         when(request.getParameter("patientId"))
                 .thenReturn("999");
@@ -232,7 +291,10 @@ class PatientServletTest {
                 "searchPatient.jsp"))
                 .thenReturn(dispatcher);
 
-        patientServlet.doGet(request, response);
+        patientServlet.doGet(
+                request,
+                response
+        );
 
         verify(request).setAttribute(
                 "errorMessage",
@@ -240,12 +302,17 @@ class PatientServletTest {
         );
 
         verify(dispatcher)
-                .forward(request, response);
+                .forward(
+                        request,
+                        response
+                );
     }
 
     @Test
     void shouldRejectInvalidPatientId()
             throws Exception {
+
+        stubLoggedInUser();
 
         when(request.getParameter("patientId"))
                 .thenReturn("ABC");
@@ -254,7 +321,10 @@ class PatientServletTest {
                 "searchPatient.jsp"))
                 .thenReturn(dispatcher);
 
-        patientServlet.doGet(request, response);
+        patientServlet.doGet(
+                request,
+                response
+        );
 
         verify(request).setAttribute(
                 "errorMessage",
@@ -262,12 +332,18 @@ class PatientServletTest {
         );
 
         verify(dispatcher)
-                .forward(request, response);
-
-        verify(patientService, never())
-                .searchPatient(
-                        org.mockito.ArgumentMatchers.anyInt()
+                .forward(
+                        request,
+                        response
                 );
+
+        verify(
+                patientService,
+                never()
+        ).searchPatient(
+                org.mockito.ArgumentMatchers
+                        .anyInt()
+        );
     }
 
     @Test
@@ -275,6 +351,7 @@ class PatientServletTest {
             throws Exception {
 
         stubValidPatientParameters();
+
         stubLoggedInUser();
 
         when(patientService.registerPatient(
@@ -288,7 +365,56 @@ class PatientServletTest {
         assertThrows(
                 ServletException.class,
                 () -> patientServlet
-                        .doPost(request, response)
+                        .doPost(
+                                request,
+                                response
+                        )
+        );
+    }
+
+    @Test
+    void shouldSearchPatientByPhoneNumber()
+            throws Exception {
+
+        stubLoggedInUser();
+
+        Patient patient =
+                mock(Patient.class);
+
+        when(request.getParameter("searchType"))
+                .thenReturn("phone");
+
+        when(request.getParameter("searchValue"))
+                .thenReturn("0771234567");
+
+        when(patientService
+                .searchPatientByContactNumber(
+                        "0771234567"
+                ))
+                .thenReturn(patient);
+
+        when(request.getRequestDispatcher(
+                "patientDetails.jsp"))
+                .thenReturn(dispatcher);
+
+        patientServlet.doGet(
+                request,
+                response
+        );
+
+        verify(patientService)
+                .searchPatientByContactNumber(
+                        "0771234567"
+                );
+
+        verify(request).setAttribute(
+                "patient",
+                patient
+        );
+
+        verify(dispatcher).forward(
+                request,
+                response
         );
     }
 
@@ -309,7 +435,8 @@ class PatientServletTest {
         when(request.getSession(false))
                 .thenReturn(session);
 
-        when(session.getAttribute("loggedInUser"))
+        when(session.getAttribute(
+                "loggedInUser"))
                 .thenReturn(loggedInUser);
     }
 }

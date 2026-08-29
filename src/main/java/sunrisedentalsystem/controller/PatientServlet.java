@@ -24,10 +24,13 @@ public class PatientServlet extends HttpServlet {
     private PatientService patientService;
 
     public PatientServlet() {
+
     }
 
     PatientServlet(PatientService patientService) {
+
         this.patientService = patientService;
+
     }
 
     @Override
@@ -39,13 +42,28 @@ public class PatientServlet extends HttpServlet {
                     new PatientServiceImpl(
                             new PatientDAOImpl()
                     );
+
         }
+
     }
 
     @Override
     protected void doPost(HttpServletRequest request,
                           HttpServletResponse response)
             throws ServletException, IOException {
+
+        HttpSession session =
+                request.getSession(false);
+
+        if (session == null
+                || session.getAttribute(
+                        "loggedInUser") == null) {
+
+            response.sendRedirect("login.jsp");
+
+            return;
+
+        }
 
         String patientName =
                 request.getParameter("patientName");
@@ -76,18 +94,7 @@ public class PatientServlet extends HttpServlet {
             );
 
             return;
-        }
 
-        HttpSession session =
-                request.getSession(false);
-
-        if (session == null
-                || session.getAttribute(
-                        "loggedInUser") == null) {
-
-            response.sendRedirect("login.jsp");
-
-            return;
         }
 
         Patient patient =
@@ -136,6 +143,7 @@ public class PatientServlet extends HttpServlet {
                         request,
                         response
                 );
+
             }
 
         } catch (SQLException e) {
@@ -144,7 +152,9 @@ public class PatientServlet extends HttpServlet {
                     "Unable to register patient.",
                     e
             );
+
         }
+
     }
 
     @Override
@@ -152,15 +162,53 @@ public class PatientServlet extends HttpServlet {
                          HttpServletResponse response)
             throws ServletException, IOException {
 
+        HttpSession session =
+                request.getSession(false);
+
+        if (session == null
+                || session.getAttribute(
+                        "loggedInUser") == null) {
+
+            response.sendRedirect(
+                    request.getContextPath()
+                    + "/login.jsp"
+            );
+
+            return;
+
+        }
+
+        String searchType =
+                request.getParameter("searchType");
+
+        String searchValue =
+                request.getParameter("searchValue");
+
+        if ("phone".equals(searchType)
+                && !isEmpty(searchValue)) {
+
+            searchPatientByContactNumber(
+                    request,
+                    response,
+                    searchValue
+            );
+
+            return;
+
+        }
+
         String patientIdText =
                 request.getParameter("patientId");
 
-        if (isEmpty(patientIdText)) {
+        if ("id".equals(searchType)
+                && !isEmpty(searchValue)) {
 
-            request.setAttribute(
-                    "errorMessage",
-                    "Patient ID is required."
-            );
+            patientIdText =
+                    searchValue;
+
+        }
+
+        if (isEmpty(patientIdText)) {
 
             request.getRequestDispatcher(
                     "searchPatient.jsp"
@@ -170,12 +218,15 @@ public class PatientServlet extends HttpServlet {
             );
 
             return;
+
         }
 
         try {
 
             int patientId =
-                    Integer.parseInt(patientIdText);
+                    Integer.parseInt(
+                            patientIdText
+                    );
 
             if (patientId <= 0) {
 
@@ -185,11 +236,14 @@ public class PatientServlet extends HttpServlet {
                 );
 
                 return;
+
             }
 
             Patient patient =
                     patientService
-                            .searchPatient(patientId);
+                            .searchPatient(
+                                    patientId
+                            );
 
             if (patient != null) {
 
@@ -218,6 +272,7 @@ public class PatientServlet extends HttpServlet {
                         request,
                         response
                 );
+
             }
 
         } catch (NumberFormatException e) {
@@ -233,13 +288,16 @@ public class PatientServlet extends HttpServlet {
                     "Unable to search patient.",
                     e
             );
+
         }
+
     }
 
     private boolean isEmpty(String value) {
 
         return value == null
                 || value.trim().isEmpty();
+
     }
 
     private void showInvalidPatientId(
@@ -258,5 +316,62 @@ public class PatientServlet extends HttpServlet {
                 request,
                 response
         );
+
     }
+
+    private void searchPatientByContactNumber(
+            HttpServletRequest request,
+            HttpServletResponse response,
+            String contactNumber)
+            throws ServletException, IOException {
+
+        try {
+
+            Patient patient =
+                    patientService
+                            .searchPatientByContactNumber(
+                                    contactNumber.trim()
+                            );
+
+            if (patient != null) {
+
+                request.setAttribute(
+                        "patient",
+                        patient
+                );
+
+                request.getRequestDispatcher(
+                        "patientDetails.jsp"
+                ).forward(
+                        request,
+                        response
+                );
+
+            } else {
+
+                request.setAttribute(
+                        "errorMessage",
+                        "Patient not found."
+                );
+
+                request.getRequestDispatcher(
+                        "searchPatient.jsp"
+                ).forward(
+                        request,
+                        response
+                );
+
+            }
+
+        } catch (SQLException e) {
+
+            throw new ServletException(
+                    "Unable to search patient.",
+                    e
+            );
+
+        }
+
+    }
+
 }

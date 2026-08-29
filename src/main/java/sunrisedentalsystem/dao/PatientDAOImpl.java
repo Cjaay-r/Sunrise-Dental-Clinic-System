@@ -71,4 +71,39 @@ public class PatientDAOImpl implements PatientDAO {
 
         return null;
     }
+    
+    @Override
+    public Patient getPatientByContactNumber(
+            String contactNumber) throws SQLException {
+
+        String sql =
+                "SELECT patient_id, patient_name, address, contact_number " +
+                "FROM patient " +
+                "WHERE contact_number = ?";
+
+        try (Connection connection =
+                DatabaseConnection.getConnection();
+
+             PreparedStatement statement =
+                connection.prepareStatement(sql)) {
+
+            statement.setString(1, contactNumber);
+
+            try (ResultSet resultSet =
+                    statement.executeQuery()) {
+
+                if (resultSet.next()) {
+
+                    return new Patient(
+                            resultSet.getInt("patient_id"),
+                            resultSet.getString("patient_name"),
+                            resultSet.getString("address"),
+                            resultSet.getString("contact_number")
+                    );
+                }
+            }
+        }
+
+        return null;
+    }
 }
