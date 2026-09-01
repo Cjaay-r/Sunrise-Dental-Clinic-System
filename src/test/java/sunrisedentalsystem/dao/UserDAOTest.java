@@ -26,12 +26,13 @@ class UserDAOTest {
         assertNotNull(user);
         assertEquals(1, user.getUserId());
         assertEquals("admin", user.getUsername());
+        assertEquals("ADMIN", user.getRole());
     }
 
     @Test
     void shouldReturnStaffRoleForStaffUser() throws SQLException {
 
-        User user = userDAO.getUserByUsername("admin");
+        User user = userDAO.getUserByUsername("staff");
 
         assertNotNull(user);
         assertEquals("STAFF", user.getRole());
