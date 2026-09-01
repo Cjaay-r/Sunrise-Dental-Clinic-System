@@ -1,239 +1,247 @@
 package sunrisedentalsystem.dao;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
 
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.Statement;
 import java.util.List;
 
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.MockedStatic;
 
 import sunrisedentalsystem.model.Dentist;
+import sunrisedentalsystem.util.DatabaseConnection;
 
 class DentistDAOTest {
 
+    private DentistDAO dentistDAO;
+
+    private Connection connection;
+    private PreparedStatement preparedStatement;
+    private Statement statement;
+    private ResultSet resultSet;
+
+    private MockedStatic<DatabaseConnection>
+            databaseConnectionMock;
+
+    @BeforeEach
+    void setUp() {
+
+        connection = mock(Connection.class);
+        preparedStatement =
+                mock(PreparedStatement.class);
+
+        statement = mock(Statement.class);
+        resultSet = mock(ResultSet.class);
+
+        databaseConnectionMock =
+                mockStatic(DatabaseConnection.class);
+
+        databaseConnectionMock
+                .when(DatabaseConnection::getConnection)
+                .thenReturn(connection);
+
+        dentistDAO = new DentistDAOImpl();
+    }
+
+    @AfterEach
+    void tearDown() {
+        databaseConnectionMock.close();
+    }
+
     @Test
-    void shouldAddDentistToDatabase()
-            throws Exception {
+    void shouldAddDentist() throws Exception {
 
-        DentistDAO dentistDAO =
-                new DentistDAOImpl();
+        Dentist dentist = new Dentist(
+                0,
+                "Dr. Silva",
+                "General Dentistry",
+                "0771111111"
+        );
 
-        Dentist dentist =
-                new Dentist(
-                        0,
-                        "Dr. TDD Test",
-                        "Orthodontics",
-                        "0771234567"
-                );
+        when(connection.prepareStatement(
+                anyString(),
+                eq(Statement.RETURN_GENERATED_KEYS)))
+                .thenReturn(preparedStatement);
+
+        when(preparedStatement.executeUpdate())
+                .thenReturn(1);
+
+        when(preparedStatement.getGeneratedKeys())
+                .thenReturn(resultSet);
+
+        when(resultSet.next())
+                .thenReturn(true);
+
+        when(resultSet.getInt(1))
+                .thenReturn(10);
 
         boolean result =
                 dentistDAO.addDentist(dentist);
 
         assertTrue(result);
+        assertEquals(10, dentist.getDentistId());
 
-        assertTrue(
-                dentist.getDentistId() > 0
-        );
+        verify(preparedStatement)
+                .setString(1, "Dr. Silva");
 
-        Dentist savedDentist =
-                dentistDAO.getDentistById(
-                        dentist.getDentistId()
+        verify(preparedStatement)
+                .setString(
+                        2,
+                        "General Dentistry"
                 );
 
-        assertNotNull(savedDentist);
+        verify(preparedStatement)
+                .setString(3, "0771111111");
+    }
+
+    @Test
+    void shouldGetDentistById() throws Exception {
+
+        when(connection.prepareStatement(anyString()))
+                .thenReturn(preparedStatement);
+
+        when(preparedStatement.executeQuery())
+                .thenReturn(resultSet);
+
+        when(resultSet.next())
+                .thenReturn(true);
+
+        when(resultSet.getInt("dentist_id"))
+                .thenReturn(4);
+
+        when(resultSet.getString("dentist_name"))
+                .thenReturn("Dr. Fernando");
+
+        when(resultSet.getString("specialization"))
+                .thenReturn("Orthodontics");
+
+        when(resultSet.getString("contact_number"))
+                .thenReturn("0712345678");
+
+        Dentist dentist =
+                dentistDAO.getDentistById(4);
+
+        assertNotNull(dentist);
+        assertEquals(4, dentist.getDentistId());
 
         assertEquals(
-                "Dr. TDD Test",
-                savedDentist.getDentistName()
+                "Dr. Fernando",
+                dentist.getDentistName()
         );
 
         assertEquals(
                 "Orthodontics",
-                savedDentist.getSpecialization()
+                dentist.getSpecialization()
         );
 
-        assertEquals(
-                "0771234567",
-                savedDentist.getContactNumber()
-        );
-
-        dentistDAO.deleteDentist(
-                dentist.getDentistId()
-        );
+        verify(preparedStatement)
+                .setInt(1, 4);
     }
 
     @Test
-    void shouldGetDentistById()
-            throws Exception {
+    void shouldGetAllDentists() throws Exception {
 
-        DentistDAO dentistDAO =
-                new DentistDAOImpl();
+        when(connection.createStatement())
+                .thenReturn(statement);
 
-        Dentist dentist =
-                new Dentist(
-                        0,
-                        "Dr. Search Test",
+        when(statement.executeQuery(anyString()))
+                .thenReturn(resultSet);
+
+        when(resultSet.next())
+                .thenReturn(true, true, false);
+
+        when(resultSet.getInt("dentist_id"))
+                .thenReturn(1, 2);
+
+        when(resultSet.getString("dentist_name"))
+                .thenReturn(
+                        "Dr. Silva",
+                        "Dr. Perera"
+                );
+
+        when(resultSet.getString("specialization"))
+                .thenReturn(
                         "General Dentistry",
-                        "0712345678"
+                        "Orthodontics"
                 );
 
-        dentistDAO.addDentist(dentist);
-
-        Dentist result =
-                dentistDAO.getDentistById(
-                        dentist.getDentistId()
+        when(resultSet.getString("contact_number"))
+                .thenReturn(
+                        "0771111111",
+                        "0772222222"
                 );
-
-        assertNotNull(result);
-
-        assertEquals(
-                "Dr. Search Test",
-                result.getDentistName()
-        );
-
-        assertEquals(
-                "General Dentistry",
-                result.getSpecialization()
-        );
-
-        dentistDAO.deleteDentist(
-                dentist.getDentistId()
-        );
-    }
-
-    @Test
-    void shouldReturnAllDentists()
-            throws Exception {
-
-        DentistDAO dentistDAO =
-                new DentistDAOImpl();
-
-        Dentist dentist =
-                new Dentist(
-                        0,
-                        "Dr. List Test",
-                        "Endodontics",
-                        "0751234567"
-                );
-
-        dentistDAO.addDentist(dentist);
 
         List<Dentist> dentists =
                 dentistDAO.getAllDentists();
 
         assertNotNull(dentists);
+        assertEquals(2, dentists.size());
 
-        assertFalse(
-                dentists.isEmpty()
-        );
-
-        dentistDAO.deleteDentist(
-                dentist.getDentistId()
+        assertEquals(
+                "Dr. Silva",
+                dentists.get(0).getDentistName()
         );
     }
 
     @Test
-    void shouldUpdateDentistInDatabase()
-            throws Exception {
+    void shouldUpdateDentist() throws Exception {
 
-        DentistDAO dentistDAO =
-                new DentistDAOImpl();
-
-        Dentist dentist =
-                new Dentist(
-                        0,
-                        "Dr. Before Update",
-                        "General Dentistry",
-                        "0761111111"
-                );
-
-        assertTrue(
-                dentistDAO.addDentist(dentist)
+        Dentist dentist = new Dentist(
+                3,
+                "Dr. Updated",
+                "Cosmetic Dentistry",
+                "0751234567"
         );
 
-        dentist.setDentistName(
-                "Dr. After Update"
-        );
+        when(connection.prepareStatement(anyString()))
+                .thenReturn(preparedStatement);
 
-        dentist.setSpecialization(
-                "Orthodontics"
-        );
-
-        dentist.setContactNumber(
-                "0762222222"
-        );
+        when(preparedStatement.executeUpdate())
+                .thenReturn(1);
 
         boolean result =
-                dentistDAO.updateDentist(
-                        dentist
-                );
+                dentistDAO.updateDentist(dentist);
 
         assertTrue(result);
 
-        Dentist updatedDentist =
-                dentistDAO.getDentistById(
-                        dentist.getDentistId()
+        verify(preparedStatement)
+                .setString(1, "Dr. Updated");
+
+        verify(preparedStatement)
+                .setString(
+                        2,
+                        "Cosmetic Dentistry"
                 );
 
-        assertNotNull(updatedDentist);
+        verify(preparedStatement)
+                .setString(3, "0751234567");
 
-        assertEquals(
-                "Dr. After Update",
-                updatedDentist.getDentistName()
-        );
-
-        assertEquals(
-                "Orthodontics",
-                updatedDentist.getSpecialization()
-        );
-
-        assertEquals(
-                "0762222222",
-                updatedDentist.getContactNumber()
-        );
-
-        dentistDAO.deleteDentist(
-                dentist.getDentistId()
-        );
+        verify(preparedStatement)
+                .setInt(4, 3);
     }
 
     @Test
-    void shouldDeleteDentistFromDatabase()
-            throws Exception {
+    void shouldDeleteDentist() throws Exception {
 
-        DentistDAO dentistDAO =
-                new DentistDAOImpl();
+        when(connection.prepareStatement(anyString()))
+                .thenReturn(preparedStatement);
 
-        Dentist dentist =
-                new Dentist(
-                        0,
-                        "Dr. Delete Test",
-                        "Periodontics",
-                        "0701234567"
-                );
-
-        assertTrue(
-                dentistDAO.addDentist(dentist)
-        );
-
-        int dentistId =
-                dentist.getDentistId();
+        when(preparedStatement.executeUpdate())
+                .thenReturn(1);
 
         boolean result =
-                dentistDAO.deleteDentist(
-                        dentistId
-                );
+                dentistDAO.deleteDentist(5);
 
         assertTrue(result);
 
-        Dentist deletedDentist =
-                dentistDAO.getDentistById(
-                        dentistId
-                );
-
-        assertNull(deletedDentist);
+        verify(preparedStatement)
+                .setInt(1, 5);
     }
 }

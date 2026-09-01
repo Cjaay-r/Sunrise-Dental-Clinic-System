@@ -1,126 +1,220 @@
 package sunrisedentalsystem.dao;
 
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import sunrisedentalsystem.model.Treatment;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
 
-import java.sql.SQLException;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.Statement;
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.*;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.mockito.MockedStatic;
+
+import sunrisedentalsystem.model.Treatment;
+import sunrisedentalsystem.util.DatabaseConnection;
 
 class TreatmentDAOTest {
 
     private TreatmentDAO treatmentDAO;
-    
+
+    private Connection connection;
+    private PreparedStatement preparedStatement;
+    private ResultSet resultSet;
+
+    private MockedStatic<DatabaseConnection>
+            databaseConnectionMock;
+
     @BeforeEach
     void setUp() {
-        treatmentDAO = new TreatmentDAOImpl();
+
+        connection = mock(Connection.class);
+
+        preparedStatement =
+                mock(PreparedStatement.class);
+
+        resultSet = mock(ResultSet.class);
+
+        databaseConnectionMock =
+                mockStatic(DatabaseConnection.class);
+
+        databaseConnectionMock
+                .when(DatabaseConnection::getConnection)
+                .thenReturn(connection);
+
+        treatmentDAO =
+                new TreatmentDAOImpl();
+    }
+
+    @AfterEach
+    void tearDown() {
+        databaseConnectionMock.close();
     }
 
     @Test
-    void testAddTreatment() throws SQLException {
+    void shouldAddTreatment() throws Exception {
 
-        Treatment treatment = new Treatment(
-                0,
-                "Dental Cleaning",
-                5000.00
-        );
+        Treatment treatment =
+                new Treatment(
+                        0,
+                        "Cleaning",
+                        5000.00
+                );
+
+        when(connection.prepareStatement(
+                anyString(),
+                eq(Statement.RETURN_GENERATED_KEYS)))
+                .thenReturn(preparedStatement);
+
+        when(preparedStatement.getGeneratedKeys())
+                .thenReturn(resultSet);
+
+        when(resultSet.next())
+                .thenReturn(true);
+
+        when(resultSet.getInt(1))
+                .thenReturn(5);
 
         treatmentDAO.addTreatment(treatment);
 
-        assertTrue(treatment.getTreatmentId() > 0);
+        assertEquals(
+                5,
+                treatment.getTreatmentId()
+        );
+
+        verify(preparedStatement)
+                .setString(1, "Cleaning");
+
+        verify(preparedStatement)
+                .setDouble(2, 5000.00);
+
+        verify(preparedStatement)
+                .executeUpdate();
     }
 
     @Test
-    void testGetTreatmentById() throws SQLException {
+    void shouldGetTreatmentById()
+            throws Exception {
 
-        Treatment treatment = new Treatment(
-                0,
-                "Root Canal",
-                25000.00
+        when(connection.prepareStatement(anyString()))
+                .thenReturn(preparedStatement);
+
+        when(preparedStatement.executeQuery())
+                .thenReturn(resultSet);
+
+        when(resultSet.next())
+                .thenReturn(true);
+
+        when(resultSet.getInt("treatment_id"))
+                .thenReturn(2);
+
+        when(resultSet.getString("treatment_type"))
+                .thenReturn("Extraction");
+
+        when(resultSet.getDouble("treatment_price"))
+                .thenReturn(7500.00);
+
+        Treatment treatment =
+                treatmentDAO.getTreatmentById(2);
+
+        assertNotNull(treatment);
+        assertEquals(2, treatment.getTreatmentId());
+
+        assertEquals(
+                "Extraction",
+                treatment.getTreatmentType()
         );
 
-        treatmentDAO.addTreatment(treatment);
-
-        Treatment retrievedTreatment =
-                treatmentDAO.getTreatmentById(treatment.getTreatmentId());
-
-        assertNotNull(retrievedTreatment);
-        assertEquals("Root Canal", retrievedTreatment.getTreatmentType());
-        assertEquals(25000.00, retrievedTreatment.getTreatmentPrice());
+        assertEquals(
+                7500.00,
+                treatment.getTreatmentPrice()
+        );
     }
 
     @Test
-    void testGetAllTreatments() throws SQLException {
+    void shouldGetAllTreatments()
+            throws Exception {
 
-        Treatment treatment = new Treatment(
-                0,
-                "Dental X-Ray",
-                4000.00
-        );
+        when(connection.prepareStatement(anyString()))
+                .thenReturn(preparedStatement);
 
-        treatmentDAO.addTreatment(treatment);
+        when(preparedStatement.executeQuery())
+                .thenReturn(resultSet);
+
+        when(resultSet.next())
+                .thenReturn(true, true, false);
+
+        when(resultSet.getInt("treatment_id"))
+                .thenReturn(1, 2);
+
+        when(resultSet.getString("treatment_type"))
+                .thenReturn(
+                        "Cleaning",
+                        "Extraction"
+                );
+
+        when(resultSet.getDouble("treatment_price"))
+                .thenReturn(
+                        5000.00,
+                        7500.00
+                );
 
         List<Treatment> treatments =
                 treatmentDAO.getAllTreatments();
 
         assertNotNull(treatments);
-        assertFalse(treatments.isEmpty());
-
-        boolean treatmentFound = treatments.stream()
-                .anyMatch(t -> t.getTreatmentId() == treatment.getTreatmentId());
-
-        assertTrue(treatmentFound);
+        assertEquals(2, treatments.size());
     }
+
     @Test
-    void testUpdateTreatment() throws SQLException {
+    void shouldUpdateTreatment()
+            throws Exception {
 
-        Treatment treatment = new Treatment(
-                0,
-                "Dental Filling",
-                8000.00
-        );
+        Treatment treatment =
+                new Treatment(
+                        3,
+                        "Updated Treatment",
+                        9000.00
+                );
 
-        treatmentDAO.addTreatment(treatment);
-
-        treatment.setTreatmentType("Premium Dental Filling");
-        treatment.setTreatmentPrice(10000.00);
+        when(connection.prepareStatement(anyString()))
+                .thenReturn(preparedStatement);
 
         treatmentDAO.updateTreatment(treatment);
 
-        Treatment updatedTreatment =
-                treatmentDAO.getTreatmentById(treatment.getTreatmentId());
+        verify(preparedStatement)
+                .setString(
+                        1,
+                        "Updated Treatment"
+                );
 
-        assertEquals(
-                "Premium Dental Filling",
-                updatedTreatment.getTreatmentType()
-        );
+        verify(preparedStatement)
+                .setDouble(2, 9000.00);
 
-        assertEquals(
-                10000.00,
-                updatedTreatment.getTreatmentPrice()
-        );
+        verify(preparedStatement)
+                .setInt(3, 3);
+
+        verify(preparedStatement)
+                .executeUpdate();
     }
 
     @Test
-    void testDeleteTreatment() throws SQLException {
+    void shouldDeleteTreatment()
+            throws Exception {
 
-        Treatment treatment = new Treatment(
-                0,
-                "Temporary Treatment",
-                3000.00
-        );
+        when(connection.prepareStatement(anyString()))
+                .thenReturn(preparedStatement);
 
-        treatmentDAO.addTreatment(treatment);
+        treatmentDAO.deleteTreatment(4);
 
-        int treatmentId = treatment.getTreatmentId();
+        verify(preparedStatement)
+                .setInt(1, 4);
 
-        treatmentDAO.deleteTreatment(treatmentId);
-
-        Treatment deletedTreatment =
-                treatmentDAO.getTreatmentById(treatmentId);
-
-        assertNull(deletedTreatment);
+        verify(preparedStatement)
+                .executeUpdate();
     }
 }
