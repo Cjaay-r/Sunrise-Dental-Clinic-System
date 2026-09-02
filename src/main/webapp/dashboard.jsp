@@ -1,11 +1,14 @@
-<%@ page language="java" contentType="text/html; charset=UTF-8"
+<%@ page language="java"
+    contentType="text/html; charset=UTF-8"
     pageEncoding="UTF-8"%>
 
 <%@ page import="sunrisedentalsystem.model.User" %>
 
 <%
     User loggedInUser =
-            (User) session.getAttribute("loggedInUser");
+            (User) session.getAttribute(
+                    "loggedInUser"
+            );
 
     if (loggedInUser == null) {
         response.sendRedirect("login.jsp");
@@ -13,10 +16,19 @@
     }
 
     String role =
-            (String) session.getAttribute("role");
+            (String) session.getAttribute(
+                    "role"
+            );
+
+    boolean isAdmin =
+            "ADMIN".equals(role);
+
+    boolean isStaff =
+            "STAFF".equals(role);
 %>
 
 <!DOCTYPE html>
+
 <html>
 
 <head>
@@ -26,10 +38,15 @@
     <meta name="viewport"
           content="width=device-width, initial-scale=1.0">
 
-    <title>Sunrise Dental Clinic - Dashboard</title>
+    <title>
+        Sunrise Dental Clinic - Dashboard
+    </title>
 
-    <link rel="stylesheet" href="css/style.css">
-    <link rel="stylesheet" href="css/dashboard.css">
+    <link rel="stylesheet"
+          href="css/style.css">
+
+    <link rel="stylesheet"
+          href="css/dashboard.css">
 
 </head>
 
@@ -46,8 +63,15 @@
             </div>
 
             <div>
-                <h2>Sunrise</h2>
-                <p>Dental Clinic</p>
+
+                <h2>
+                    Sunrise
+                </h2>
+
+                <p>
+                    Dental Clinic
+                </p>
+
             </div>
 
         </div>
@@ -55,59 +79,93 @@
 
         <nav class="sidebar-nav">
 
-            <a href="<%= request.getContextPath() %>/dashboard.jsp"
-               class="nav-item active">
+            <a
+                href="<%= request.getContextPath() %>/dashboard.jsp"
+                class="nav-item active">
+
                 Dashboard
+
             </a>
 
-            <a href="<%= request.getContextPath() %>/appointment"
-               class="nav-item">
+            <a
+                href="<%= request.getContextPath() %>/appointment"
+                class="nav-item">
+
                 Appointments
+
             </a>
 
-            <a href="<%= request.getContextPath() %>/patient"
-               class="nav-item">
+            <a
+                href="<%= request.getContextPath() %>/patient"
+                class="nav-item">
+
                 Patients
+
             </a>
 
-            <a href="<%= request.getContextPath() %>/billing"
-               class="nav-item">
+            <a
+                href="<%= request.getContextPath() %>/billing"
+                class="nav-item">
+
                 Billing
+
             </a>
 
-            <a href="<%= request.getContextPath() %>/dentist"
-               class="nav-item">
+            <a
+                href="<%= request.getContextPath() %>/dentist"
+                class="nav-item">
+
                 Dentists
+
             </a>
 
-            <a href="<%= request.getContextPath() %>/treatment"
-               class="nav-item">
+            <a
+                href="<%= request.getContextPath() %>/treatment"
+                class="nav-item">
+
                 Treatments
+
             </a>
+
+            <% if (isAdmin) { %>
+
+                <a
+                    href="<%= request.getContextPath() %>/staff"
+                    class="nav-item">
+
+                    Staff Management
+
+                </a>
+
+            <% } %>
 
         </nav>
 
 
         <div class="sidebar-footer">
 
-    <a href="<%= request.getContextPath() %>/logout"
-       class="logout-link">
-        Logout
-    </a>
+            <a
+                href="<%= request.getContextPath() %>/logout"
+                class="logout-link">
 
-    <p>Appointment & Patient</p>
-    <p>Management System</p>
+                Logout
 
-</div>
+            </a>
+
+            <p>
+                Appointment & Patient
+            </p>
+
+            <p>
+                Management System
+            </p>
+
+        </div>
 
     </aside>
 
 
-    <!-- Main Content -->
-
     <main class="main-content">
-
-        <!-- Top Header -->
 
         <header class="top-header">
 
@@ -118,8 +176,10 @@
                 </p>
 
                 <h1>
+
                     Welcome back,
                     <%= loggedInUser.getUsername() %>
+
                 </h1>
 
             </div>
@@ -128,9 +188,12 @@
             <div class="user-profile">
 
                 <div class="user-avatar">
-                    <%= loggedInUser.getUsername()
+
+                    <%= loggedInUser
+                            .getUsername()
                             .substring(0, 1)
                             .toUpperCase() %>
+
                 </div>
 
                 <div>
@@ -149,8 +212,6 @@
 
         </header>
 
-
-        <!-- Welcome Panel -->
 
         <section class="welcome-panel">
 
@@ -178,13 +239,13 @@
         </section>
 
 
-        <!-- Section Heading -->
-
         <div class="section-heading">
 
             <div>
 
-                <h2>Quick Access</h2>
+                <h2>
+                    Quick Access
+                </h2>
 
                 <p>
                     Select a module to continue.
@@ -195,13 +256,11 @@
         </div>
 
 
-        <!-- Dashboard Cards -->
-
         <section class="dashboard-grid">
 
-
-            <a href="<%= request.getContextPath() %>/appointment"
-               class="dashboard-card">
+            <a
+                href="<%= request.getContextPath() %>/appointment"
+                class="dashboard-card">
 
                 <div class="card-number">
                     01
@@ -209,11 +268,24 @@
 
                 <div class="card-content">
 
-                    <h3>Appointments</h3>
+                    <h3>
+                        Appointments
+                    </h3>
 
                     <p>
-                        Register, search and manage
-                        patient appointments.
+
+                        <% if (isStaff) { %>
+
+                            Register, search and manage
+                            patient appointments.
+
+                        <% } else { %>
+
+                            Search and review
+                            appointment records.
+
+                        <% } %>
+
                     </p>
 
                 </div>
@@ -225,8 +297,9 @@
             </a>
 
 
-            <a href="<%= request.getContextPath() %>/patient"
-               class="dashboard-card">
+            <a
+                href="<%= request.getContextPath() %>/patient"
+                class="dashboard-card">
 
                 <div class="card-number">
                     02
@@ -234,7 +307,9 @@
 
                 <div class="card-content">
 
-                    <h3>Patients</h3>
+                    <h3>
+                        Patients
+                    </h3>
 
                     <p>
                         Register patients and access
@@ -250,8 +325,9 @@
             </a>
 
 
-            <a href="<%= request.getContextPath() %>/billing"
-               class="dashboard-card">
+            <a
+                href="<%= request.getContextPath() %>/billing"
+                class="dashboard-card">
 
                 <div class="card-number">
                     03
@@ -259,11 +335,24 @@
 
                 <div class="card-content">
 
-                    <h3>Billing</h3>
+                    <h3>
+                        Billing
+                    </h3>
 
                     <p>
-                        Calculate treatment costs
-                        and manage patient bills.
+
+                        <% if (isStaff) { %>
+
+                            Generate bills and access
+                            patient receipts.
+
+                        <% } else { %>
+
+                            Search and view generated
+                            billing records.
+
+                        <% } %>
+
                     </p>
 
                 </div>
@@ -275,8 +364,9 @@
             </a>
 
 
-            <a href="<%= request.getContextPath() %>/dentist"
-               class="dashboard-card">
+            <a
+                href="<%= request.getContextPath() %>/dentist"
+                class="dashboard-card">
 
                 <div class="card-number">
                     04
@@ -284,11 +374,24 @@
 
                 <div class="card-content">
 
-                    <h3>Dentists</h3>
+                    <h3>
+                        Dentists
+                    </h3>
 
                     <p>
-                        View and manage dentist
-                        information.
+
+                        <% if (isAdmin) { %>
+
+                            View and manage dentist
+                            information.
+
+                        <% } else { %>
+
+                            View registered dentist
+                            information.
+
+                        <% } %>
+
                     </p>
 
                 </div>
@@ -300,8 +403,9 @@
             </a>
 
 
-            <a href="<%= request.getContextPath() %>/treatment"
-               class="dashboard-card">
+            <a
+                href="<%= request.getContextPath() %>/treatment"
+                class="dashboard-card">
 
                 <div class="card-number">
                     05
@@ -309,11 +413,24 @@
 
                 <div class="card-content">
 
-                    <h3>Treatments</h3>
+                    <h3>
+                        Treatments
+                    </h3>
 
                     <p>
-                        Manage available treatments
-                        and treatment prices.
+
+                        <% if (isAdmin) { %>
+
+                            Manage available treatments
+                            and treatment prices.
+
+                        <% } else { %>
+
+                            View available treatments
+                            and treatment prices.
+
+                        <% } %>
+
                     </p>
 
                 </div>
@@ -324,6 +441,37 @@
 
             </a>
 
+
+            <% if (isAdmin) { %>
+
+                <a
+                    href="<%= request.getContextPath() %>/staff"
+                    class="dashboard-card">
+
+                    <div class="card-number">
+                        06
+                    </div>
+
+                    <div class="card-content">
+
+                        <h3>
+                            Staff Management
+                        </h3>
+
+                        <p>
+                            Create staff accounts and
+                            maintain staff information.
+                        </p>
+
+                    </div>
+
+                    <div class="card-arrow">
+                        →
+                    </div>
+
+                </a>
+
+            <% } %>
 
         </section>
 
