@@ -16,9 +16,6 @@
         );
 }
 
-
-/* Main Login Card */
-
 .login-card {
     width: 900px;
     max-width: 100%;
@@ -37,9 +34,6 @@
     box-shadow:
         0 18px 45px rgba(0, 0, 0, 0.12);
 }
-
-
-/* Left Branding Section */
 
 .login-brand {
     position: relative;
@@ -61,9 +55,6 @@
 
     overflow: hidden;
 }
-
-
-/* Decorative circle */
 
 .login-brand::before {
     content: "";
@@ -127,9 +118,9 @@
 .login-brand h1 {
     position: relative;
 
-    margin-bottom: 12px;
+    margin-bottom: 14px;
 
-    font-size: 32px;
+    font-size: 38px;
     line-height: 1.15;
 }
 
@@ -139,7 +130,7 @@
 
     margin-bottom: 25px;
 
-    font-size: 15px;
+    font-size: 18px;
 
     line-height: 1.6;
 
@@ -164,16 +155,14 @@
 .brand-description {
     position: relative;
 
-    max-width: 280px;
+    max-width: 300px;
 
-    font-size: 14px;
+    font-size: 17px;
     line-height: 1.7;
 
     opacity: 0.82;
 }
 
-
-/* Login Form Side */
 
 .login-form-section {
     display: flex;
@@ -190,11 +179,11 @@
 
 
 .small-heading {
-    margin-bottom: 8px;
+    margin-bottom: 10px;
 
     color: var(--primary-orange);
 
-    font-size: 12px;
+    font-size: 14px;
     font-weight: bold;
 
     letter-spacing: 1.5px;
@@ -202,20 +191,18 @@
 
 
 .login-heading h2 {
-    margin-bottom: 8px;
+    margin-bottom: 10px;
 
-    font-size: 30px;
+    font-size: 36px;
 }
 
 
 .login-heading > p:last-child {
     color: var(--text-light);
 
-    font-size: 14px;
+    font-size: 17px;
 }
 
-
-/* Form */
 
 .form-group {
     margin-bottom: 20px;
@@ -225,9 +212,9 @@
 .form-group label {
     display: block;
 
-    margin-bottom: 8px;
+    margin-bottom: 9px;
 
-    font-size: 14px;
+    font-size: 17px;
     font-weight: bold;
 }
 
@@ -235,7 +222,7 @@
 .form-group input {
     width: 100%;
 
-    padding: 13px 14px;
+    padding: 15px 16px;
 
     border: 1px solid var(--border-color);
 
@@ -243,7 +230,7 @@
 
     outline: none;
 
-    font-size: 14px;
+    font-size: 17px;
 
     transition: 0.2s;
 }
@@ -257,14 +244,12 @@
 }
 
 
-/* Login Button */
-
 .login-button {
     width: 100%;
 
-    padding: 13px;
+    padding: 15px;
 
-    margin-top: 5px;
+    margin-top: 7px;
 
     border: none;
 
@@ -274,7 +259,7 @@
 
     color: var(--white);
 
-    font-size: 15px;
+    font-size: 17px;
     font-weight: bold;
 
     transition: 0.2s;
@@ -287,13 +272,10 @@
     transform: translateY(-1px);
 }
 
-
-/* Error Message */
-
 .error-message {
     margin-bottom: 20px;
 
-    padding: 12px 14px;
+    padding: 14px 15px;
 
     border-left: 4px solid #dc2626;
 
@@ -303,11 +285,8 @@
 
     color: #b91c1c;
 
-    font-size: 14px;
+    font-size: 15px;
 }
-
-
-/* Footer */
 
 .login-footer {
     margin-top: 25px;
@@ -317,11 +296,8 @@
 
     color: var(--text-light);
 
-    font-size: 12px;
+    font-size: 14px;
 }
-
-
-/* Responsive */
 
 @media (max-width: 750px) {
 
@@ -338,6 +314,9 @@
     }
 
     .login-form-section {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
         padding: 40px 35px;
     }
 
