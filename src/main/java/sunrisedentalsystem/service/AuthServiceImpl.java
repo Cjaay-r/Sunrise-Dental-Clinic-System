@@ -4,14 +4,18 @@ import java.sql.SQLException;
 
 import sunrisedentalsystem.dao.UserDAO;
 import sunrisedentalsystem.model.User;
+import sunrisedentalsystem.util.PasswordUtil;
 
 public class AuthServiceImpl
         implements AuthService {
 
     private final UserDAO userDAO;
 
-    public AuthServiceImpl(UserDAO userDAO) {
-        this.userDAO = userDAO;
+    public AuthServiceImpl(
+            UserDAO userDAO) {
+
+        this.userDAO =
+                userDAO;
     }
 
     @Override
@@ -21,13 +25,23 @@ public class AuthServiceImpl
             throws SQLException {
 
         User user =
-                userDAO.getUserByUsername(username);
+                userDAO.getUserByUsername(
+                        username
+                );
 
         if (user == null) {
+
             return null;
         }
 
-        if (!user.getPassword().equals(password)) {
+        boolean passwordMatches =
+                PasswordUtil.matchesPassword(
+                        password,
+                        user.getPassword()
+                );
+
+        if (!passwordMatches) {
+
             return null;
         }
 

@@ -5,6 +5,7 @@ import java.util.List;
 
 import sunrisedentalsystem.dao.StaffDAO;
 import sunrisedentalsystem.model.Staff;
+import sunrisedentalsystem.util.PasswordUtil;
 
 public class StaffServiceImpl
         implements StaffService {
@@ -22,6 +23,15 @@ public class StaffServiceImpl
     public Staff addStaff(
             Staff staff)
             throws SQLException {
+
+        String hashedPassword =
+                PasswordUtil.hashPassword(
+                        staff.getPassword()
+                );
+
+        staff.setPassword(
+                hashedPassword
+        );
 
         staffDAO.addStaff(
                 staff

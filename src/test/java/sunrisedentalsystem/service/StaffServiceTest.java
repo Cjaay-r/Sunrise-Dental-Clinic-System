@@ -1,6 +1,7 @@
 package sunrisedentalsystem.service;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
@@ -14,6 +15,7 @@ import org.junit.jupiter.api.Test;
 
 import sunrisedentalsystem.dao.StaffDAO;
 import sunrisedentalsystem.model.Staff;
+import sunrisedentalsystem.util.PasswordUtil;
 
 class StaffServiceTest {
 
@@ -34,11 +36,21 @@ class StaffServiceTest {
     }
 
     @Test
-    void shouldAddStaffThroughDAO()
+    void shouldHashPasswordBeforeAddingStaff()
             throws Exception {
 
+        String plainPassword =
+                "staff123";
+
         Staff staff =
-                mock(Staff.class);
+                new Staff(
+                        0,
+                        0,
+                        "nimal",
+                        plainPassword,
+                        "Nimal Fernando",
+                        "0771234567"
+                );
 
         Staff result =
                 staffService.addStaff(
@@ -48,6 +60,26 @@ class StaffServiceTest {
         assertSame(
                 staff,
                 result
+        );
+
+        assertNotEquals(
+                plainPassword,
+                staff.getPassword()
+        );
+
+        assertTrue(
+                staff.getPassword()
+                        .startsWith(
+                                "$2a$"
+                        )
+        );
+
+        assertTrue(
+                PasswordUtil
+                        .matchesPassword(
+                                plainPassword,
+                                staff.getPassword()
+                        )
         );
 
         verify(staffDAO)
