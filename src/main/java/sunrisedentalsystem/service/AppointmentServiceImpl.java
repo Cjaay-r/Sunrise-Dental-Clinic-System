@@ -3,6 +3,7 @@ package sunrisedentalsystem.service;
 import java.sql.SQLException;
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.util.List;
 
 import sunrisedentalsystem.dao.AppointmentDAO;
 import sunrisedentalsystem.model.Appointment;
@@ -15,18 +16,20 @@ public class AppointmentServiceImpl
     public AppointmentServiceImpl(
             AppointmentDAO appointmentDAO) {
 
-        this.appointmentDAO = appointmentDAO;
+        this.appointmentDAO =
+                appointmentDAO;
     }
 
     @Override
     public Appointment registerAppointment(
             Appointment appointment,
-            int staffId)
+            int userId)
             throws SQLException {
 
         appointmentDAO.addAppointment(
                 appointment,
-                staffId);
+                userId
+        );
 
         return appointment;
     }
@@ -38,7 +41,16 @@ public class AppointmentServiceImpl
 
         return appointmentDAO
                 .getAppointmentByNumber(
-                        appointmentNo);
+                        appointmentNo
+                );
+    }
+
+    @Override
+    public List<Appointment> getAllAppointments()
+            throws SQLException {
+
+        return appointmentDAO
+                .getAllAppointments();
     }
 
     @Override
@@ -52,6 +64,18 @@ public class AppointmentServiceImpl
                 .isAppointmentSlotAvailable(
                         dentistId,
                         appointmentDate,
-                        appointmentTime);
+                        appointmentTime
+                );
+    }
+
+    @Override
+    public boolean cancelAppointment(
+            String appointmentNo)
+            throws SQLException {
+
+        return appointmentDAO
+                .cancelAppointment(
+                        appointmentNo
+                );
     }
 }
