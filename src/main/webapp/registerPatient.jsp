@@ -9,19 +9,24 @@
     }
 
     String errorMessage =
-            (String) request.getAttribute("errorMessage");
+            (String) request.getAttribute(
+                    "errorMessage"
+            );
 
     String patientName =
             request.getParameter("patientName") != null
-            ? request.getParameter("patientName") : "";
+            ? request.getParameter("patientName")
+            : "";
 
     String address =
             request.getParameter("address") != null
-            ? request.getParameter("address") : "";
+            ? request.getParameter("address")
+            : "";
 
     String contactNumber =
             request.getParameter("contactNumber") != null
-            ? request.getParameter("contactNumber") : "";
+            ? request.getParameter("contactNumber")
+            : "";
 %>
 
 <!DOCTYPE html>
@@ -39,8 +44,11 @@
         Register Patient - Sunrise Dental Clinic
     </title>
 
-    <link rel="stylesheet" href="css/style.css">
-    <link rel="stylesheet" href="css/management.css">
+    <link rel="stylesheet"
+          href="css/style.css">
+
+    <link rel="stylesheet"
+          href="css/management.css">
 
 </head>
 
@@ -67,10 +75,10 @@
 
         </div>
 
-        <a href="dashboard.jsp"
+        <a href="patient"
            class="back-button">
 
-            Dashboard
+            Back to Patients
 
         </a>
 

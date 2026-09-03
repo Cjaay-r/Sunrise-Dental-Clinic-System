@@ -11,10 +11,14 @@
     }
 
     Patient patient =
-            (Patient) request.getAttribute("patient");
+            (Patient) request.getAttribute(
+                    "patient"
+            );
 
     String successMessage =
-            (String) request.getAttribute("successMessage");
+            (String) request.getAttribute(
+                    "successMessage"
+            );
 
     if (patient == null) {
         response.sendRedirect("patient");
@@ -37,8 +41,11 @@
         Patient Details - Sunrise Dental Clinic
     </title>
 
-    <link rel="stylesheet" href="css/style.css">
-    <link rel="stylesheet" href="css/management.css">
+    <link rel="stylesheet"
+          href="css/style.css">
+
+    <link rel="stylesheet"
+          href="css/management.css">
 
 </head>
 
@@ -64,10 +71,10 @@
 
         </div>
 
-        <a href="dashboard.jsp"
+        <a href="patient"
            class="back-button">
 
-            Dashboard
+            Back to Patients
 
         </a>
 

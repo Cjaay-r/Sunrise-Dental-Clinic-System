@@ -1,12 +1,9 @@
 package sunrisedentalsystem.controller;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -14,6 +11,7 @@ import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import java.sql.SQLException;
+import java.util.List;
 
 import javax.servlet.RequestDispatcher;
 import javax.servlet.ServletException;
@@ -66,67 +64,64 @@ class PatientServletTest {
         loggedInUser =
                 mock(User.class);
 
+        when(request.getSession(false))
+                .thenReturn(session);
+
+        when(session.getAttribute(
+                "loggedInUser"))
+                .thenReturn(loggedInUser);
+
+        when(request.getRequestDispatcher(
+                anyString()))
+                .thenReturn(dispatcher);
+
         patientServlet =
-                new PatientServlet(patientService);
+                new PatientServlet(
+                        patientService
+                );
     }
 
     @Test
-    void shouldRejectPatientWhenRequiredFieldsAreEmpty()
+    void shouldOpenPatientSearchPage()
             throws Exception {
 
-        stubLoggedInUser();
-
-        when(request.getParameter("patientName"))
-                .thenReturn("");
-
-        when(request.getParameter("address"))
-                .thenReturn("");
-
-        when(request.getParameter("contactNumber"))
-                .thenReturn("");
-
-        when(request.getRequestDispatcher(
-                "registerPatient.jsp"))
-                .thenReturn(dispatcher);
-
-        patientServlet.doPost(
+        patientServlet.doGet(
                 request,
                 response
         );
 
-        verify(request).setAttribute(
-                "errorMessage",
-                "All patient fields are required."
-        );
+        verify(request)
+                .getRequestDispatcher(
+                        "searchPatient.jsp"
+                );
 
         verify(dispatcher)
                 .forward(
                         request,
                         response
                 );
-
-        verifyNoInteractions(
-                patientService
-        );
     }
 
     @Test
     void shouldRedirectToLoginWhenUserIsNotLoggedIn()
             throws Exception {
 
-        stubValidPatientParameters();
-
         when(request.getSession(false))
                 .thenReturn(null);
 
-        patientServlet.doPost(
+        when(request.getContextPath())
+                .thenReturn(
+                        "/sunrisedentalsystem"
+                );
+
+        patientServlet.doGet(
                 request,
                 response
         );
 
         verify(response)
                 .sendRedirect(
-                        "login.jsp"
+                        "/sunrisedentalsystem/login.jsp"
                 );
 
         verifyNoInteractions(
@@ -138,18 +133,43 @@ class PatientServletTest {
     void shouldRegisterPatientWhenDetailsAreValid()
             throws Exception {
 
-        stubValidPatientParameters();
+        when(request.getParameter(
+                "patientName"))
+                .thenReturn(
+                        "Kyle John"
+                );
 
-        stubLoggedInUser();
+        when(request.getParameter(
+                "address"))
+                .thenReturn(
+                        "Colombo"
+                );
 
-        when(patientService.registerPatient(
-                any(Patient.class)))
-                .thenAnswer(invocation ->
-                        invocation.getArgument(0));
+        when(request.getParameter(
+                "contactNumber"))
+                .thenReturn(
+                        "0771234567"
+                );
 
-        when(request.getRequestDispatcher(
-                "patientDetails.jsp"))
-                .thenReturn(dispatcher);
+        when(patientService
+                .registerPatient(
+                        any(Patient.class)
+                ))
+                .thenAnswer(
+                        invocation -> {
+
+                            Patient patient =
+                                    invocation.getArgument(
+                                            0
+                                    );
+
+                            patient.setPatientId(
+                                    5
+                            );
+
+                            return patient;
+                        }
+                );
 
         patientServlet.doPost(
                 request,
@@ -169,10 +189,8 @@ class PatientServletTest {
         Patient patient =
                 captor.getValue();
 
-        assertNotNull(patient);
-
         assertEquals(
-                "Kamal Perera",
+                "Kyle John",
                 patient.getPatientName()
         );
 
@@ -186,20 +204,53 @@ class PatientServletTest {
                 patient.getContactNumber()
         );
 
-        verify(request).setAttribute(
-                eq("patient"),
-                any(Patient.class)
+        verify(request)
+                .setAttribute(
+                        "successMessage",
+                        "Patient registered successfully."
+                );
+
+        verify(request)
+                .getRequestDispatcher(
+                        "patientDetails.jsp"
+                );
+    }
+
+    @Test
+    void shouldRejectPatientWhenRequiredFieldsAreEmpty()
+            throws Exception {
+
+        when(request.getParameter(
+                "patientName"))
+                .thenReturn("");
+
+        when(request.getParameter(
+                "address"))
+                .thenReturn("");
+
+        when(request.getParameter(
+                "contactNumber"))
+                .thenReturn("");
+
+        patientServlet.doPost(
+                request,
+                response
         );
 
-        verify(request).setAttribute(
-                "successMessage",
-                "Patient registered successfully."
-        );
+        verify(request)
+                .setAttribute(
+                        "errorMessage",
+                        "All patient fields are required."
+                );
 
-        verify(dispatcher)
-                .forward(
-                        request,
-                        response
+        verify(request)
+                .getRequestDispatcher(
+                        "registerPatient.jsp"
+                );
+
+        verify(patientService, never())
+                .registerPatient(
+                        any(Patient.class)
                 );
     }
 
@@ -207,53 +258,84 @@ class PatientServletTest {
     void shouldShowErrorWhenPatientRegistrationFails()
             throws Exception {
 
-        stubValidPatientParameters();
+        when(request.getParameter(
+                "patientName"))
+                .thenReturn(
+                        "Kyle John"
+                );
 
-        stubLoggedInUser();
+        when(request.getParameter(
+                "address"))
+                .thenReturn(
+                        "Colombo"
+                );
 
-        when(patientService.registerPatient(
-                any(Patient.class)))
+        when(request.getParameter(
+                "contactNumber"))
+                .thenReturn(
+                        "0771234567"
+                );
+
+        when(patientService
+                .registerPatient(
+                        any(Patient.class)
+                ))
                 .thenReturn(null);
-
-        when(request.getRequestDispatcher(
-                "registerPatient.jsp"))
-                .thenReturn(dispatcher);
 
         patientServlet.doPost(
                 request,
                 response
         );
 
-        verify(request).setAttribute(
-                "errorMessage",
-                "Unable to register patient."
-        );
+        verify(request)
+                .setAttribute(
+                        "errorMessage",
+                        "Unable to register patient."
+                );
 
-        verify(dispatcher)
-                .forward(
-                        request,
-                        response
+        verify(request)
+                .getRequestDispatcher(
+                        "registerPatient.jsp"
                 );
     }
 
     @Test
-    void shouldDisplayPatientWhenPatientExists()
+    void shouldSearchPatientsByName()
             throws Exception {
 
-        stubLoggedInUser();
+        List<Patient> patients =
+                List.of(
+                        createPatient(
+                                2,
+                                "Kyle John",
+                                "0771234567"
+                        ),
+                        createPatient(
+                                3,
+                                "Kyle Fernando",
+                                "0712345678"
+                        )
+                );
 
-        Patient patient =
-                mock(Patient.class);
+        when(request.getParameter(
+                "searchType"))
+                .thenReturn(
+                        "name"
+                );
 
-        when(request.getParameter("patientId"))
-                .thenReturn("5");
+        when(request.getParameter(
+                "searchValue"))
+                .thenReturn(
+                        "Kyle"
+                );
 
-        when(patientService.searchPatient(5))
-                .thenReturn(patient);
-
-        when(request.getRequestDispatcher(
-                "patientDetails.jsp"))
-                .thenReturn(dispatcher);
+        when(patientService
+                .searchPatientsByName(
+                        "Kyle"
+                ))
+                .thenReturn(
+                        patients
+                );
 
         patientServlet.doGet(
                 request,
@@ -261,12 +343,73 @@ class PatientServletTest {
         );
 
         verify(patientService)
-                .searchPatient(5);
+                .searchPatientsByName(
+                        "Kyle"
+                );
 
-        verify(request).setAttribute(
-                "patient",
-                patient
+        verify(request)
+                .setAttribute(
+                        "patientResults",
+                        patients
+                );
+
+        verify(request)
+                .getRequestDispatcher(
+                        "searchPatient.jsp"
+                );
+    }
+
+    @Test
+    void shouldDisplayPhoneSearchResult()
+            throws Exception {
+
+        Patient patient =
+                createPatient(
+                        2,
+                        "Kyle John",
+                        "0771234567"
+                );
+
+        when(request.getParameter(
+                "searchType"))
+                .thenReturn(
+                        "phone"
+                );
+
+        when(request.getParameter(
+                "searchValue"))
+                .thenReturn(
+                        "0771234567"
+                );
+
+        when(patientService
+                .searchPatientByContactNumber(
+                        "0771234567"
+                ))
+                .thenReturn(
+                        patient
+                );
+
+        patientServlet.doGet(
+                request,
+                response
         );
+
+        verify(patientService)
+                .searchPatientByContactNumber(
+                        "0771234567"
+                );
+
+        verify(request)
+                .setAttribute(
+                        "patientResults",
+                        List.of(patient)
+                );
+
+        verify(request)
+                .getRequestDispatcher(
+                        "searchPatient.jsp"
+                );
 
         verify(dispatcher)
                 .forward(
@@ -276,167 +419,203 @@ class PatientServletTest {
     }
 
     @Test
-    void shouldShowErrorWhenPatientDoesNotExist()
+    void shouldShowEmptyResultsWhenPhoneNumberDoesNotExist()
             throws Exception {
 
-        stubLoggedInUser();
+        when(request.getParameter(
+                "searchType"))
+                .thenReturn(
+                        "phone"
+                );
 
-        when(request.getParameter("patientId"))
-                .thenReturn("999");
+        when(request.getParameter(
+                "searchValue"))
+                .thenReturn(
+                        "0779999999"
+                );
 
-        when(patientService.searchPatient(999))
+        when(patientService
+                .searchPatientByContactNumber(
+                        "0779999999"
+                ))
                 .thenReturn(null);
 
-        when(request.getRequestDispatcher(
-                "searchPatient.jsp"))
-                .thenReturn(dispatcher);
-
         patientServlet.doGet(
                 request,
                 response
         );
 
-        verify(request).setAttribute(
-                "errorMessage",
-                "Patient not found."
-        );
+        verify(request)
+                .setAttribute(
+                        "patientResults",
+                        List.of()
+                );
 
-        verify(dispatcher)
-                .forward(
-                        request,
-                        response
+        verify(request)
+                .getRequestDispatcher(
+                        "searchPatient.jsp"
                 );
     }
 
     @Test
-    void shouldRejectInvalidPatientId()
+    void shouldDisplayPatientUsingInternalPatientReference()
             throws Exception {
 
-        stubLoggedInUser();
+        Patient patient =
+                createPatient(
+                        2,
+                        "Kyle John",
+                        "0771234567"
+                );
 
-        when(request.getParameter("patientId"))
-                .thenReturn("ABC");
+        when(request.getParameter(
+                "patientId"))
+                .thenReturn(
+                        "2"
+                );
 
-        when(request.getRequestDispatcher(
-                "searchPatient.jsp"))
-                .thenReturn(dispatcher);
+        when(patientService
+                .searchPatient(
+                        2
+                ))
+                .thenReturn(
+                        patient
+                );
 
         patientServlet.doGet(
                 request,
                 response
         );
 
-        verify(request).setAttribute(
-                "errorMessage",
-                "Invalid patient ID."
-        );
-
-        verify(dispatcher)
-                .forward(
-                        request,
-                        response
+        verify(patientService)
+                .searchPatient(
+                        2
                 );
 
-        verify(
-                patientService,
-                never()
-        ).searchPatient(
-                org.mockito.ArgumentMatchers
-                        .anyInt()
+        verify(request)
+                .setAttribute(
+                        "patient",
+                        patient
+                );
+
+        verify(request)
+                .getRequestDispatcher(
+                        "patientDetails.jsp"
+                );
+    }
+
+    @Test
+    void shouldRejectInvalidPatientReference()
+            throws Exception {
+
+        when(request.getParameter(
+                "patientId"))
+                .thenReturn(
+                        "ABC"
+                );
+
+        patientServlet.doGet(
+                request,
+                response
         );
+
+        verify(request)
+                .setAttribute(
+                        "errorMessage",
+                        "Invalid patient reference."
+                );
+
+        verify(request)
+                .getRequestDispatcher(
+                        "searchPatient.jsp"
+                );
+    }
+
+    @Test
+    void shouldRejectInvalidPatientSearchType()
+            throws Exception {
+
+        when(request.getParameter(
+                "searchType"))
+                .thenReturn(
+                        "invalid"
+                );
+
+        when(request.getParameter(
+                "searchValue"))
+                .thenReturn(
+                        "Kyle"
+                );
+
+        patientServlet.doGet(
+                request,
+                response
+        );
+
+        verify(request)
+                .setAttribute(
+                        "errorMessage",
+                        "Invalid patient search type."
+                );
+
+        verify(request)
+                .getRequestDispatcher(
+                        "searchPatient.jsp"
+                );
     }
 
     @Test
     void shouldThrowServletExceptionWhenPatientServiceFails()
             throws Exception {
 
-        stubValidPatientParameters();
+        when(request.getParameter(
+                "searchType"))
+                .thenReturn(
+                        "name"
+                );
 
-        stubLoggedInUser();
+        when(request.getParameter(
+                "searchValue"))
+                .thenReturn(
+                        "Kyle"
+                );
 
-        when(patientService.registerPatient(
-                any(Patient.class)))
+        when(patientService
+                .searchPatientsByName(
+                        "Kyle"
+                ))
                 .thenThrow(
                         new SQLException(
                                 "Database error"
                         )
                 );
 
-        assertThrows(
-                ServletException.class,
-                () -> patientServlet
-                        .doPost(
-                                request,
-                                response
-                        )
-        );
-    }
-
-    @Test
-    void shouldSearchPatientByPhoneNumber()
-            throws Exception {
-
-        stubLoggedInUser();
-
-        Patient patient =
-                mock(Patient.class);
-
-        when(request.getParameter("searchType"))
-                .thenReturn("phone");
-
-        when(request.getParameter("searchValue"))
-                .thenReturn("0771234567");
-
-        when(patientService
-                .searchPatientByContactNumber(
-                        "0771234567"
-                ))
-                .thenReturn(patient);
-
-        when(request.getRequestDispatcher(
-                "patientDetails.jsp"))
-                .thenReturn(dispatcher);
-
-        patientServlet.doGet(
-                request,
-                response
-        );
-
-        verify(patientService)
-                .searchPatientByContactNumber(
-                        "0771234567"
+        ServletException exception =
+                assertThrows(
+                        ServletException.class,
+                        () ->
+                                patientServlet.doGet(
+                                        request,
+                                        response
+                                )
                 );
 
-        verify(request).setAttribute(
-                "patient",
-                patient
-        );
-
-        verify(dispatcher).forward(
-                request,
-                response
+        assertEquals(
+                "Unable to search patient.",
+                exception.getMessage()
         );
     }
 
-    private void stubValidPatientParameters() {
+    private Patient createPatient(
+            int patientId,
+            String patientName,
+            String contactNumber) {
 
-        when(request.getParameter("patientName"))
-                .thenReturn("Kamal Perera");
-
-        when(request.getParameter("address"))
-                .thenReturn("Colombo");
-
-        when(request.getParameter("contactNumber"))
-                .thenReturn("0771234567");
-    }
-
-    private void stubLoggedInUser() {
-
-        when(request.getSession(false))
-                .thenReturn(session);
-
-        when(session.getAttribute(
-                "loggedInUser"))
-                .thenReturn(loggedInUser);
+        return new Patient(
+                patientId,
+                patientName,
+                "Colombo",
+                contactNumber
+        );
     }
 }
