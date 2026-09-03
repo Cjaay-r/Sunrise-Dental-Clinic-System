@@ -39,8 +39,11 @@
         Dentist Management - Sunrise Dental Clinic
     </title>
 
-    <link rel="stylesheet" href="css/style.css">
-    <link rel="stylesheet" href="css/management.css">
+    <link rel="stylesheet"
+          href="css/style.css">
+
+    <link rel="stylesheet"
+          href="css/management.css">
 
 </head>
 
@@ -70,7 +73,7 @@
         <a href="dashboard.jsp"
            class="back-button">
 
-            Dashboard
+            Back to Dashboard
 
         </a>
 
@@ -82,10 +85,6 @@
         <div class="action-panel">
 
             <div class="panel-heading">
-
-                <div class="panel-number">
-                    01
-                </div>
 
                 <div>
 
@@ -146,10 +145,6 @@
 
         <div class="secondary-panel">
 
-            <div class="panel-number">
-                02
-            </div>
-
             <% if (isAdmin) { %>
 
                 <h2>
@@ -207,6 +202,7 @@
                 <%= dentists != null
                         ? dentists.size()
                         : 0 %>
+
                 Records
 
             </span>
@@ -261,9 +257,11 @@
                             </td>
 
                             <td>
+
                                 <strong>
                                     <%= dentist.getDentistName() %>
                                 </strong>
+
                             </td>
 
                             <td>
