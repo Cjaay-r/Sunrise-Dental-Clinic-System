@@ -11,6 +11,7 @@ public class Bill {
     private double treatmentCost;
     private double totalAmount;
     private LocalDate generatedDate;
+    private String generatedByStaffName;
 
     public Bill() {
     }
@@ -91,5 +92,17 @@ public class Bill {
 
     public void setGeneratedDate(LocalDate generatedDate) {
         this.generatedDate = generatedDate;
+    }
+    
+    public String getGeneratedByStaffName() {
+
+        return generatedByStaffName;
+    }
+
+    public void setGeneratedByStaffName(
+            String generatedByStaffName) {
+
+        this.generatedByStaffName =
+                generatedByStaffName;
     }
 }

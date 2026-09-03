@@ -1,10 +1,8 @@
 package sunrisedentalsystem.controller;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -12,6 +10,9 @@ import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import java.sql.SQLException;
+import java.time.LocalDate;
+import java.time.LocalTime;
+import java.util.List;
 
 import javax.servlet.RequestDispatcher;
 import javax.servlet.ServletException;
@@ -21,9 +22,13 @@ import javax.servlet.http.HttpSession;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.ArgumentCaptor;
 
+import sunrisedentalsystem.model.Appointment;
+import sunrisedentalsystem.model.AppointmentStatus;
 import sunrisedentalsystem.model.Bill;
+import sunrisedentalsystem.model.Dentist;
+import sunrisedentalsystem.model.Patient;
+import sunrisedentalsystem.model.Treatment;
 import sunrisedentalsystem.model.User;
 import sunrisedentalsystem.service.BillingService;
 
@@ -32,8 +37,11 @@ class BillingServletTest {
     private BillingService billingService;
 
     private HttpServletRequest request;
+
     private HttpServletResponse response;
+
     private HttpSession session;
+
     private RequestDispatcher dispatcher;
 
     private User loggedInUser;
@@ -43,171 +51,630 @@ class BillingServletTest {
     @BeforeEach
     void setUp() {
 
-        billingService = mock(BillingService.class);
+        billingService =
+                mock(BillingService.class);
 
-        request = mock(HttpServletRequest.class);
-        response = mock(HttpServletResponse.class);
-        session = mock(HttpSession.class);
-        dispatcher = mock(RequestDispatcher.class);
+        request =
+                mock(HttpServletRequest.class);
 
-        loggedInUser = mock(User.class);
+        response =
+                mock(HttpServletResponse.class);
+
+        session =
+                mock(HttpSession.class);
+
+        dispatcher =
+                mock(RequestDispatcher.class);
+
+        loggedInUser =
+                mock(User.class);
+
+        when(request.getSession(false))
+                .thenReturn(
+                        session
+                );
+
+        when(session.getAttribute(
+                "loggedInUser"))
+                .thenReturn(
+                        loggedInUser
+                );
+
+        when(session.getAttribute(
+                "role"))
+                .thenReturn(
+                        "STAFF"
+                );
+
+        when(loggedInUser.getUserId())
+                .thenReturn(
+                        2
+                );
+
+        when(request.getRequestDispatcher(
+                anyString()))
+                .thenReturn(
+                        dispatcher
+                );
 
         billingServlet =
-                new BillingServlet(billingService);
+                new BillingServlet(
+                        billingService
+                );
     }
 
     @Test
-    void shouldRejectBillWhenRequiredFieldsAreEmpty()
+    void shouldDisplayBillingManagement()
             throws Exception {
 
-        when(request.getParameter("appointmentNo"))
-                .thenReturn("");
+        List<Bill> bills =
+                List.of(
+                        createBill(
+                                1,
+                                10
+                        ),
+                        createBill(
+                                2,
+                                11
+                        )
+                );
 
-        when(request.getParameter("consultationFee"))
-                .thenReturn("");
+        when(billingService
+                .getAllBills())
+                .thenReturn(
+                        bills
+                );
 
-        when(request.getParameter("treatmentCost"))
-                .thenReturn("");
-
-        when(request.getRequestDispatcher(
-                "generateBill.jsp"))
-                .thenReturn(dispatcher);
-
-        billingServlet.doPost(request, response);
-
-        verify(request).setAttribute(
-                "errorMessage",
-                "All billing fields are required."
+        billingServlet.doGet(
+                request,
+                response
         );
 
-        verify(dispatcher)
-                .forward(request, response);
+        verify(request)
+                .setAttribute(
+                        "bills",
+                        bills
+                );
 
-        verifyNoInteractions(billingService);
+        verify(request)
+                .getRequestDispatcher(
+                        "searchBill.jsp"
+                );
+
+        verify(dispatcher)
+                .forward(
+                        request,
+                        response
+                );
     }
 
     @Test
     void shouldRedirectToLoginWhenUserIsNotLoggedIn()
             throws Exception {
 
-        stubValidBillingParameters();
-
         when(request.getSession(false))
                 .thenReturn(null);
 
-        billingServlet.doPost(request, response);
+        billingServlet.doGet(
+                request,
+                response
+        );
 
         verify(response)
-                .sendRedirect("login.jsp");
-
-        verifyNoInteractions(billingService);
-    }
-
-    @Test
-    void shouldGenerateBillWhenDetailsAreValid()
-            throws Exception {
-
-        stubValidBillingParameters();
-        stubLoggedInUser();
-
-        when(billingService.calculateAndSaveBill(
-                any(Bill.class)))
-                .thenAnswer(invocation ->
-                        invocation.getArgument(0));
-
-        when(request.getRequestDispatcher(
-                "billReceipt.jsp"))
-                .thenReturn(dispatcher);
-
-        billingServlet.doPost(request, response);
-
-        ArgumentCaptor<Bill> captor =
-                ArgumentCaptor.forClass(Bill.class);
-
-        verify(billingService)
-                .calculateAndSaveBill(
-                        captor.capture()
+                .sendRedirect(
+                        "login.jsp"
                 );
 
-        Bill bill = captor.getValue();
-
-        assertNotNull(bill);
-
-        assertEquals(
-                101,
-                bill.getAppointmentNo()
+        verifyNoInteractions(
+                billingService
         );
-
-        assertEquals(
-                1,
-                bill.getGeneratedByStaffId()
-        );
-
-        assertEquals(
-                1500.0,
-                bill.getConsultationFee()
-        );
-
-        assertEquals(
-                5000.0,
-                bill.getTreatmentCost()
-        );
-
-        assertEquals(
-                6500.0,
-                bill.getTotalAmount()
-        );
-
-        assertNotNull(
-                bill.getGeneratedDate()
-        );
-
-        verify(request).setAttribute(
-                eq("bill"),
-                any(Bill.class)
-        );
-
-        verify(request).setAttribute(
-                "successMessage",
-                "Bill generated successfully."
-        );
-
-        verify(dispatcher)
-                .forward(request, response);
     }
 
     @Test
-    void shouldRejectInvalidBillingValues()
+    void shouldOpenGenerateBillPageForStaff()
             throws Exception {
 
-        when(request.getParameter("appointmentNo"))
-                .thenReturn("ABC");
+        when(request.getParameter(
+                "action"))
+                .thenReturn(
+                        "generate"
+                );
 
-        when(request.getParameter("consultationFee"))
-                .thenReturn("invalid");
-
-        when(request.getParameter("treatmentCost"))
-                .thenReturn("5000");
-
-        stubLoggedInUser();
-
-        when(request.getRequestDispatcher(
-                "generateBill.jsp"))
-                .thenReturn(dispatcher);
-
-        billingServlet.doPost(request, response);
-
-        verify(request).setAttribute(
-                "errorMessage",
-                "Invalid billing details."
+        billingServlet.doGet(
+                request,
+                response
         );
 
+        verify(request)
+                .setAttribute(
+                        "consultationFee",
+                        BillingService.CONSULTATION_FEE
+                );
+
+        verify(request)
+                .getRequestDispatcher(
+                        "generateBill.jsp"
+                );
+
         verify(dispatcher)
-                .forward(request, response);
+                .forward(
+                        request,
+                        response
+                );
+    }
+
+    @Test
+    void shouldRejectAdminWhenOpeningGenerateBillPage()
+            throws Exception {
+
+        when(session.getAttribute(
+                "role"))
+                .thenReturn(
+                        "ADMIN"
+                );
+
+        when(request.getParameter(
+                "action"))
+                .thenReturn(
+                        "generate"
+                );
+
+        billingServlet.doGet(
+                request,
+                response
+        );
+
+        verify(response)
+                .sendError(
+                        HttpServletResponse.SC_FORBIDDEN,
+                        "Staff access required."
+                );
+
+        verifyNoInteractions(
+                billingService
+        );
+    }
+
+    @Test
+    void shouldPreviewAppointmentBeforeGeneratingBill()
+            throws Exception {
+
+        Appointment appointment =
+                createAppointment(
+                        AppointmentStatus.SCHEDULED
+                );
+
+        when(request.getParameter(
+                "action"))
+                .thenReturn(
+                        "generate"
+                );
+
+        when(request.getParameter(
+                "appointmentNo"))
+                .thenReturn(
+                        "10"
+                );
+
+        when(billingService
+                .getBillByAppointmentNo(
+                        10
+                ))
+                .thenReturn(null);
+
+        when(billingService
+                .getAppointmentForBilling(
+                        10
+                ))
+                .thenReturn(
+                        appointment
+                );
+
+        billingServlet.doGet(
+                request,
+                response
+        );
+
+        verify(request)
+                .setAttribute(
+                        "consultationFee",
+                        2500.00
+                );
+
+        verify(request)
+                .setAttribute(
+                        "appointment",
+                        appointment
+                );
+
+        verify(request)
+                .setAttribute(
+                        "treatmentCost",
+                        5000.00
+                );
+
+        verify(request)
+                .setAttribute(
+                        "totalAmount",
+                        7500.00
+                );
+
+        verify(request)
+                .getRequestDispatcher(
+                        "generateBill.jsp"
+                );
+
+        verify(dispatcher)
+                .forward(
+                        request,
+                        response
+                );
+    }
+
+    @Test
+    void shouldRejectPreviewWhenBillAlreadyExists()
+            throws Exception {
+
+        Bill existingBill =
+                createBill(
+                        5,
+                        10
+                );
+
+        when(request.getParameter(
+                "action"))
+                .thenReturn(
+                        "generate"
+                );
+
+        when(request.getParameter(
+                "appointmentNo"))
+                .thenReturn(
+                        "10"
+                );
+
+        when(billingService
+                .getBillByAppointmentNo(
+                        10
+                ))
+                .thenReturn(
+                        existingBill
+                );
+
+        billingServlet.doGet(
+                request,
+                response
+        );
+
+        verify(request)
+                .setAttribute(
+                        "errorMessage",
+                        "A bill has already been generated for this appointment."
+                );
+
+        verify(request)
+                .setAttribute(
+                        "existingBill",
+                        existingBill
+                );
 
         verify(billingService, never())
-                .calculateAndSaveBill(
-                        any(Bill.class)
+                .getAppointmentForBilling(
+                        10
+                );
+
+        verify(request)
+                .getRequestDispatcher(
+                        "generateBill.jsp"
+                );
+    }
+
+    @Test
+    void shouldRejectPreviewWhenAppointmentDoesNotExist()
+            throws Exception {
+
+        when(request.getParameter(
+                "action"))
+                .thenReturn(
+                        "generate"
+                );
+
+        when(request.getParameter(
+                "appointmentNo"))
+                .thenReturn(
+                        "999"
+                );
+
+        when(billingService
+                .getBillByAppointmentNo(
+                        999
+                ))
+                .thenReturn(null);
+
+        when(billingService
+                .getAppointmentForBilling(
+                        999
+                ))
+                .thenReturn(null);
+
+        billingServlet.doGet(
+                request,
+                response
+        );
+
+        verify(request)
+                .setAttribute(
+                        "errorMessage",
+                        "Appointment not found."
+                );
+
+        verify(request)
+                .getRequestDispatcher(
+                        "generateBill.jsp"
+                );
+    }
+
+    @Test
+    void shouldRejectPreviewWhenAppointmentIsCancelled()
+            throws Exception {
+
+        Appointment appointment =
+                createAppointment(
+                        AppointmentStatus.CANCELLED
+                );
+
+        when(request.getParameter(
+                "action"))
+                .thenReturn(
+                        "generate"
+                );
+
+        when(request.getParameter(
+                "appointmentNo"))
+                .thenReturn(
+                        "10"
+                );
+
+        when(billingService
+                .getBillByAppointmentNo(
+                        10
+                ))
+                .thenReturn(null);
+
+        when(billingService
+                .getAppointmentForBilling(
+                        10
+                ))
+                .thenReturn(
+                        appointment
+                );
+
+        billingServlet.doGet(
+                request,
+                response
+        );
+
+        verify(request)
+                .setAttribute(
+                        "errorMessage",
+                        "Cancelled appointments cannot be billed."
+                );
+
+        verify(request)
+                .getRequestDispatcher(
+                        "generateBill.jsp"
+                );
+    }
+
+    @Test
+    void shouldGenerateBillForStaff()
+            throws Exception {
+
+        Bill bill =
+                createBill(
+                        5,
+                        10
+                );
+
+        Appointment appointment =
+                createAppointment(
+                        AppointmentStatus.SCHEDULED
+                );
+
+        when(request.getParameter(
+                "action"))
+                .thenReturn(
+                        "generate"
+                );
+
+        when(request.getParameter(
+                "appointmentNo"))
+                .thenReturn(
+                        "10"
+                );
+
+        when(billingService
+                .generateBill(
+                        10,
+                        2
+                ))
+                .thenReturn(
+                        bill
+                );
+
+        when(billingService
+                .getAppointmentForBilling(
+                        10
+                ))
+                .thenReturn(
+                        appointment
+                );
+
+        billingServlet.doPost(
+                request,
+                response
+        );
+
+        verify(billingService)
+                .generateBill(
+                        10,
+                        2
+                );
+
+        verify(request)
+                .setAttribute(
+                        "successMessage",
+                        "Bill generated successfully."
+                );
+
+        verify(request)
+                .setAttribute(
+                        "bill",
+                        bill
+                );
+
+        verify(request)
+                .setAttribute(
+                        "appointment",
+                        appointment
+                );
+
+        verify(request)
+                .getRequestDispatcher(
+                        "billReceipt.jsp"
+                );
+
+        verify(dispatcher)
+                .forward(
+                        request,
+                        response
+                );
+    }
+
+    @Test
+    void shouldRejectAdminWhenGeneratingBill()
+            throws Exception {
+
+        when(session.getAttribute(
+                "role"))
+                .thenReturn(
+                        "ADMIN"
+                );
+
+        when(request.getParameter(
+                "action"))
+                .thenReturn(
+                        "generate"
+                );
+
+        billingServlet.doPost(
+                request,
+                response
+        );
+
+        verify(response)
+                .sendError(
+                        HttpServletResponse.SC_FORBIDDEN,
+                        "Staff access required."
+                );
+
+        verifyNoInteractions(
+                billingService
+        );
+    }
+
+    @Test
+    void shouldRejectGenerationWhenAppointmentNumberIsEmpty()
+            throws Exception {
+
+        when(request.getParameter(
+                "action"))
+                .thenReturn(
+                        "generate"
+                );
+
+        when(request.getParameter(
+                "appointmentNo"))
+                .thenReturn(
+                        ""
+                );
+
+        billingServlet.doPost(
+                request,
+                response
+        );
+
+        verify(request)
+                .setAttribute(
+                        "errorMessage",
+                        "Appointment number is required."
+                );
+
+        verify(request)
+                .setAttribute(
+                        "consultationFee",
+                        BillingService.CONSULTATION_FEE
+                );
+
+        verify(request)
+                .getRequestDispatcher(
+                        "generateBill.jsp"
+                );
+
+        verify(billingService, never())
+                .generateBill(
+                        10,
+                        2
+                );
+    }
+
+    @Test
+    void shouldShowGenerationErrorFromService()
+            throws Exception {
+
+        when(request.getParameter(
+                "action"))
+                .thenReturn(
+                        "generate"
+                );
+
+        when(request.getParameter(
+                "appointmentNo"))
+                .thenReturn(
+                        "10"
+                );
+
+        when(billingService
+                .generateBill(
+                        10,
+                        2
+                ))
+                .thenThrow(
+                        new IllegalStateException(
+                                "A bill has already been generated for this appointment."
+                        )
+                );
+
+        billingServlet.doPost(
+                request,
+                response
+        );
+
+        verify(request)
+                .setAttribute(
+                        "errorMessage",
+                        "A bill has already been generated for this appointment."
+                );
+
+        verify(request)
+                .setAttribute(
+                        "consultationFee",
+                        BillingService.CONSULTATION_FEE
+                );
+
+        verify(request)
+                .getRequestDispatcher(
+                        "generateBill.jsp"
                 );
     }
 
@@ -215,102 +682,245 @@ class BillingServletTest {
     void shouldDisplayBillWhenBillExists()
             throws Exception {
 
-        Bill bill = mock(Bill.class);
+        Bill bill =
+                createBill(
+                        5,
+                        10
+                );
 
-        when(request.getParameter("appointmentNo"))
-                .thenReturn("101");
+        Appointment appointment =
+                createAppointment(
+                        AppointmentStatus.SCHEDULED
+                );
+
+        when(request.getParameter(
+                "appointmentNo"))
+                .thenReturn(
+                        "10"
+                );
 
         when(billingService
-                .getBillByAppointmentNo(101))
-                .thenReturn(bill);
+                .getBillByAppointmentNo(
+                        10
+                ))
+                .thenReturn(
+                        bill
+                );
 
-        when(request.getRequestDispatcher(
-                "billReceipt.jsp"))
-                .thenReturn(dispatcher);
+        when(billingService
+                .getAppointmentForBilling(
+                        10
+                ))
+                .thenReturn(
+                        appointment
+                );
 
-        billingServlet.doGet(request, response);
-
-        verify(billingService)
-                .getBillByAppointmentNo(101);
-
-        verify(request).setAttribute(
-                "bill",
-                bill
+        billingServlet.doGet(
+                request,
+                response
         );
 
+        verify(request)
+                .setAttribute(
+                        "bill",
+                        bill
+                );
+
+        verify(request)
+                .setAttribute(
+                        "appointment",
+                        appointment
+                );
+
+        verify(request)
+                .getRequestDispatcher(
+                        "billReceipt.jsp"
+                );
+
         verify(dispatcher)
-                .forward(request, response);
+                .forward(
+                        request,
+                        response
+                );
     }
 
     @Test
     void shouldShowErrorWhenBillDoesNotExist()
             throws Exception {
 
-        when(request.getParameter("appointmentNo"))
-                .thenReturn("999");
+        when(request.getParameter(
+                "appointmentNo"))
+                .thenReturn(
+                        "999"
+                );
 
         when(billingService
-                .getBillByAppointmentNo(999))
+                .getBillByAppointmentNo(
+                        999
+                ))
                 .thenReturn(null);
 
-        when(request.getRequestDispatcher(
-                "searchBill.jsp"))
-                .thenReturn(dispatcher);
+        when(billingService
+                .getAllBills())
+                .thenReturn(
+                        List.of()
+                );
 
-        billingServlet.doGet(request, response);
-
-        verify(request).setAttribute(
-                "errorMessage",
-                "Bill not found."
+        billingServlet.doGet(
+                request,
+                response
         );
 
+        verify(request)
+                .setAttribute(
+                        "errorMessage",
+                        "Bill not found."
+                );
+
+        verify(request)
+                .getRequestDispatcher(
+                        "searchBill.jsp"
+                );
+
         verify(dispatcher)
-                .forward(request, response);
+                .forward(
+                        request,
+                        response
+                );
+    }
+
+    @Test
+    void shouldRejectInvalidAppointmentNumber()
+            throws Exception {
+
+        when(request.getParameter(
+                "appointmentNo"))
+                .thenReturn(
+                        "ABC"
+                );
+
+        when(billingService
+                .getAllBills())
+                .thenReturn(
+                        List.of()
+                );
+
+        billingServlet.doGet(
+                request,
+                response
+        );
+
+        verify(request)
+                .setAttribute(
+                        "errorMessage",
+                        "Invalid appointment number."
+                );
+
+        verify(request)
+                .getRequestDispatcher(
+                        "searchBill.jsp"
+                );
+
+        verify(dispatcher)
+                .forward(
+                        request,
+                        response
+                );
     }
 
     @Test
     void shouldThrowServletExceptionWhenBillingFails()
             throws Exception {
 
-        stubValidBillingParameters();
-        stubLoggedInUser();
+        when(request.getParameter(
+                "action"))
+                .thenReturn(
+                        "generate"
+                );
 
-        when(billingService.calculateAndSaveBill(
-                any(Bill.class)))
+        when(request.getParameter(
+                "appointmentNo"))
+                .thenReturn(
+                        "10"
+                );
+
+        when(billingService
+                .generateBill(
+                        10,
+                        2
+                ))
                 .thenThrow(
                         new SQLException(
                                 "Database error"
                         )
                 );
 
-        assertThrows(
-                ServletException.class,
-                () -> billingServlet
-                        .doPost(request, response)
+        ServletException exception =
+                assertThrows(
+                        ServletException.class,
+                        () ->
+                                billingServlet
+                                        .doPost(
+                                                request,
+                                                response
+                                        )
+                );
+
+        assertEquals(
+                "Unable to generate bill.",
+                exception.getMessage()
         );
     }
 
-    private void stubValidBillingParameters() {
+    private Appointment createAppointment(
+            AppointmentStatus status) {
 
-        when(request.getParameter("appointmentNo"))
-                .thenReturn("101");
+        Patient patient =
+                new Patient(
+                        1,
+                        "Test Patient",
+                        "Colombo",
+                        "0771234567"
+                );
 
-        when(request.getParameter("consultationFee"))
-                .thenReturn("1500.00");
+        Dentist dentist =
+                new Dentist(
+                        2,
+                        "Dr. Silva"
+                );
 
-        when(request.getParameter("treatmentCost"))
-                .thenReturn("5000.00");
+        Treatment treatment =
+                new Treatment(
+                        3,
+                        "Cleaning",
+                        5000.00
+                );
+
+        return new Appointment(
+                "10",
+                LocalDate.now(),
+                LocalTime.of(
+                        10,
+                        30
+                ),
+                status,
+                patient,
+                dentist,
+                treatment
+        );
     }
 
-    private void stubLoggedInUser() {
+    private Bill createBill(
+            int billId,
+            int appointmentNo) {
 
-        when(request.getSession(false))
-                .thenReturn(session);
-
-        when(session.getAttribute("loggedInUser"))
-                .thenReturn(loggedInUser);
-
-        when(loggedInUser.getUserId())
-                .thenReturn(1);
+        return new Bill(
+                billId,
+                appointmentNo,
+                2,
+                2500.00,
+                5000.00,
+                LocalDate.now()
+        );
     }
 }
