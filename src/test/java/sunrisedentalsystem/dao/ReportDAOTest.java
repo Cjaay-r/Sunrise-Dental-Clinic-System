@@ -2,15 +2,16 @@ package sunrisedentalsystem.dao;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.sql.CallableStatement;
 import java.sql.Connection;
 import java.sql.Date;
-import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.time.LocalDate;
 
@@ -26,13 +27,9 @@ class ReportDAOTest {
 
     private Connection connection;
 
-    private PreparedStatement appointmentStatement;
-    private PreparedStatement billingStatement;
-    private PreparedStatement treatmentStatement;
+    private CallableStatement callableStatement;
 
-    private ResultSet appointmentResultSet;
-    private ResultSet billingResultSet;
-    private ResultSet treatmentResultSet;
+    private ResultSet resultSet;
 
     private MockedStatic<DatabaseConnection>
             databaseConnectionMock;
@@ -46,22 +43,10 @@ class ReportDAOTest {
         connection =
                 mock(Connection.class);
 
-        appointmentStatement =
-                mock(PreparedStatement.class);
+        callableStatement =
+                mock(CallableStatement.class);
 
-        billingStatement =
-                mock(PreparedStatement.class);
-
-        treatmentStatement =
-                mock(PreparedStatement.class);
-
-        appointmentResultSet =
-                mock(ResultSet.class);
-
-        billingResultSet =
-                mock(ResultSet.class);
-
-        treatmentResultSet =
+        resultSet =
                 mock(ResultSet.class);
 
         databaseConnectionMock =
@@ -78,13 +63,17 @@ class ReportDAOTest {
                 );
 
         when(connection
-                .prepareStatement(
+                .prepareCall(
                         anyString()
                 ))
                 .thenReturn(
-                        appointmentStatement,
-                        billingStatement,
-                        treatmentStatement
+                        callableStatement
+                );
+
+        when(callableStatement
+                .executeQuery())
+                .thenReturn(
+                        resultSet
                 );
 
         reportDAO =
@@ -105,93 +94,48 @@ class ReportDAOTest {
                 LocalDate.of(
                         2026,
                         9,
-                        3
+                        4
                 );
 
-        when(appointmentStatement
-                .executeQuery())
-                .thenReturn(
-                        appointmentResultSet
-                );
-
-        when(appointmentResultSet
-                .next())
+        when(resultSet.next())
                 .thenReturn(true);
 
-        when(appointmentResultSet
-                .getInt(
-                        "total_appointments"
-                ))
-                .thenReturn(10);
+        when(resultSet.getInt(
+                "total_appointments"))
+                .thenReturn(2);
 
-        when(appointmentResultSet
-                .getInt(
-                        "scheduled_appointments"
-                ))
-                .thenReturn(7);
+        when(resultSet.getInt(
+                "scheduled_appointments"))
+                .thenReturn(2);
 
-        when(appointmentResultSet
-                .getInt(
-                        "cancelled_appointments"
-                ))
-                .thenReturn(3);
+        when(resultSet.getInt(
+                "cancelled_appointments"))
+                .thenReturn(0);
 
+        when(resultSet.getInt(
+                "bills_generated"))
+                .thenReturn(1);
 
-        when(billingStatement
-                .executeQuery())
+        when(resultSet.getDouble(
+                "total_revenue"))
                 .thenReturn(
-                        billingResultSet
+                        8500.00
                 );
 
-        when(billingResultSet
-                .next())
-                .thenReturn(true);
-
-        when(billingResultSet
-                .getInt(
-                        "bills_generated"
-                ))
-                .thenReturn(6);
-
-        when(billingResultSet
-                .getDouble(
-                        "total_revenue"
-                ))
+        when(resultSet.getString(
+                "most_common_treatment"))
                 .thenReturn(
-                        63000.00
+                        "Pediatric Treatment"
                 );
 
-
-        when(treatmentStatement
-                .executeQuery())
-                .thenReturn(
-                        treatmentResultSet
-                );
-
-        when(treatmentResultSet
-                .next())
-                .thenReturn(true);
-
-        when(treatmentResultSet
-                .getString(
-                        "treatment_type"
-                ))
-                .thenReturn(
-                        "Dental Filling"
-                );
-
-        when(treatmentResultSet
-                .getInt(
-                        "treatment_count"
-                ))
-                .thenReturn(4);
-
+        when(resultSet.getInt(
+                "most_common_treatment_count"))
+                .thenReturn(2);
 
         ClinicReport report =
                 reportDAO.getClinicReport(
                         reportDate
                 );
-
 
         assertNotNull(
                 report
@@ -203,152 +147,126 @@ class ReportDAOTest {
         );
 
         assertEquals(
-                10,
+                2,
                 report.getTotalAppointments()
         );
 
         assertEquals(
-                7,
+                2,
                 report.getScheduledAppointments()
         );
 
         assertEquals(
-                3,
+                0,
                 report.getCancelledAppointments()
         );
 
         assertEquals(
-                6,
+                1,
                 report.getBillsGenerated()
         );
 
         assertEquals(
-                63000.00,
+                8500.00,
                 report.getTotalRevenue()
         );
 
         assertEquals(
-                "Dental Filling",
+                "Pediatric Treatment",
                 report.getMostCommonTreatment()
         );
 
         assertEquals(
-                4,
+                2,
                 report.getMostCommonTreatmentCount()
         );
 
-
-        Date sqlDate =
-                Date.valueOf(
-                        reportDate
+        verify(connection)
+                .prepareCall(
+                        "{CALL sp_get_daily_clinic_summary(?)}"
                 );
 
-        verify(appointmentStatement)
+        verify(callableStatement)
                 .setDate(
                         1,
-                        sqlDate
+                        Date.valueOf(
+                                reportDate
+                        )
                 );
 
-        verify(billingStatement)
-                .setDate(
-                        1,
-                        sqlDate
-                );
-
-        verify(treatmentStatement)
-                .setDate(
-                        1,
-                        sqlDate
-                );
+        verify(callableStatement)
+                .executeQuery();
     }
 
     @Test
-    void shouldHandleDateWithNoTreatmentData()
+    void shouldHandleDateWithNoReportData()
             throws Exception {
 
         LocalDate reportDate =
                 LocalDate.of(
                         2026,
                         9,
-                        4
+                        5
                 );
 
-        when(appointmentStatement
-                .executeQuery())
-                .thenReturn(
-                        appointmentResultSet
-                );
-
-        when(appointmentResultSet
-                .next())
+        when(resultSet.next())
                 .thenReturn(true);
 
-        when(appointmentResultSet
-                .getInt(
-                        "total_appointments"
-                ))
+        when(resultSet.getInt(
+                "total_appointments"))
                 .thenReturn(0);
 
-        when(appointmentResultSet
-                .getInt(
-                        "scheduled_appointments"
-                ))
+        when(resultSet.getInt(
+                "scheduled_appointments"))
                 .thenReturn(0);
 
-        when(appointmentResultSet
-                .getInt(
-                        "cancelled_appointments"
-                ))
+        when(resultSet.getInt(
+                "cancelled_appointments"))
                 .thenReturn(0);
 
-
-        when(billingStatement
-                .executeQuery())
-                .thenReturn(
-                        billingResultSet
-                );
-
-        when(billingResultSet
-                .next())
-                .thenReturn(true);
-
-        when(billingResultSet
-                .getInt(
-                        "bills_generated"
-                ))
+        when(resultSet.getInt(
+                "bills_generated"))
                 .thenReturn(0);
 
-        when(billingResultSet
-                .getDouble(
-                        "total_revenue"
-                ))
+        when(resultSet.getDouble(
+                "total_revenue"))
                 .thenReturn(0.0);
 
+        when(resultSet.getString(
+                "most_common_treatment"))
+                .thenReturn(null);
 
-        when(treatmentStatement
-                .executeQuery())
-                .thenReturn(
-                        treatmentResultSet
-                );
-
-        when(treatmentResultSet
-                .next())
-                .thenReturn(false);
-
+        when(resultSet.getInt(
+                "most_common_treatment_count"))
+                .thenReturn(0);
 
         ClinicReport report =
                 reportDAO.getClinicReport(
                         reportDate
                 );
 
-
         assertNotNull(
                 report
         );
 
         assertEquals(
+                reportDate,
+                report.getReportDate()
+        );
+
+        assertEquals(
                 0,
                 report.getTotalAppointments()
+        );
+
+        assertEquals(
+                0,
+                report.getScheduledAppointments()
+        );
+
+        assertEquals(
+                0,
+                report.getCancelledAppointments()
         );
 
         assertEquals(
@@ -361,8 +279,7 @@ class ReportDAOTest {
                 report.getTotalRevenue()
         );
 
-        assertEquals(
-                null,
+        assertNull(
                 report.getMostCommonTreatment()
         );
 
@@ -370,5 +287,16 @@ class ReportDAOTest {
                 0,
                 report.getMostCommonTreatmentCount()
         );
+
+        verify(callableStatement)
+                .setDate(
+                        1,
+                        Date.valueOf(
+                                reportDate
+                        )
+                );
+
+        verify(callableStatement)
+                .executeQuery();
     }
 }
