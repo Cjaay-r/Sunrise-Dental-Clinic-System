@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
@@ -23,17 +24,24 @@ import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 
 import sunrisedentalsystem.model.Treatment;
+import sunrisedentalsystem.model.User;
 import sunrisedentalsystem.service.TreatmentService;
 
 class TreatmentServletTest {
 
     private TreatmentService treatmentService;
-    private TreatmentServlet treatmentServlet;
 
     private HttpServletRequest request;
+
     private HttpServletResponse response;
+
     private HttpSession session;
+
     private RequestDispatcher dispatcher;
+
+    private User loggedInUser;
+
+    private TreatmentServlet treatmentServlet;
 
     @BeforeEach
     void setUp() {
@@ -53,13 +61,22 @@ class TreatmentServletTest {
         dispatcher =
                 mock(RequestDispatcher.class);
 
+        loggedInUser =
+                mock(User.class);
+
         when(request.getSession(false))
                 .thenReturn(session);
 
-        when(session.getAttribute("loggedInUser"))
-                .thenReturn(new Object());
+        when(session.getAttribute(
+                "loggedInUser"))
+                .thenReturn(loggedInUser);
 
-        when(request.getRequestDispatcher(anyString()))
+        when(session.getAttribute(
+                "role"))
+                .thenReturn("ADMIN");
+
+        when(request.getRequestDispatcher(
+                anyString()))
                 .thenReturn(dispatcher);
 
         treatmentServlet =
@@ -69,36 +86,51 @@ class TreatmentServletTest {
     }
 
     @Test
-    void shouldRejectTreatmentWhenRequiredFieldsAreEmpty()
+    void shouldDisplayAllTreatmentsWhenTreatmentIdIsNotProvided()
             throws Exception {
 
-        when(request.getParameter("action"))
-                .thenReturn("add");
+        List<Treatment> treatments =
+                List.of(
+                        new Treatment(
+                                1,
+                                "Cleaning",
+                                5000.00
+                        ),
+                        new Treatment(
+                                2,
+                                "Dental Filling",
+                                8000.00
+                        )
+                );
 
-        when(request.getParameter("treatmentType"))
-                .thenReturn("");
+        when(treatmentService
+                .getAllTreatments())
+                .thenReturn(treatments);
 
-        when(request.getParameter("treatmentPrice"))
-                .thenReturn("");
-
-        treatmentServlet.doPost(
+        treatmentServlet.doGet(
                 request,
                 response
         );
 
-        verify(request).setAttribute(
-                "errorMessage",
-                "All treatment fields are required."
-        );
+        verify(treatmentService)
+                .getAllTreatments();
 
-        verify(request).getRequestDispatcher(
-                "addTreatment.jsp"
-        );
+        verify(request)
+                .setAttribute(
+                        "treatments",
+                        treatments
+                );
 
-        verify(dispatcher).forward(
-                request,
-                response
-        );
+        verify(request)
+                .getRequestDispatcher(
+                        "treatmentList.jsp"
+                );
+
+        verify(dispatcher)
+                .forward(
+                        request,
+                        response
+                );
     }
 
     @Test
@@ -108,14 +140,15 @@ class TreatmentServletTest {
         when(request.getSession(false))
                 .thenReturn(null);
 
-        treatmentServlet.doPost(
+        treatmentServlet.doGet(
                 request,
                 response
         );
 
-        verify(response).sendRedirect(
-                "login.jsp"
-        );
+        verify(response)
+                .sendRedirect(
+                        "login.jsp"
+                );
 
         verifyNoInteractions(
                 treatmentService
@@ -123,149 +156,55 @@ class TreatmentServletTest {
     }
 
     @Test
-    void shouldAddTreatmentWhenDetailsAreValid()
+    void shouldOpenAddTreatmentPageForAdmin()
             throws Exception {
 
-        when(request.getParameter("action"))
+        when(request.getParameter(
+                "action"))
                 .thenReturn("add");
 
-        when(request.getParameter("treatmentType"))
-                .thenReturn(
-                        "Dental Cleaning"
-                );
-
-        when(request.getParameter("treatmentPrice"))
-                .thenReturn(
-                        "5000"
-                );
-
-        when(treatmentService.addTreatment(
-                any(Treatment.class)))
-                .thenReturn(true);
-
-        treatmentServlet.doPost(
+        treatmentServlet.doGet(
                 request,
                 response
         );
 
-        ArgumentCaptor<Treatment> treatmentCaptor =
-                ArgumentCaptor.forClass(
-                        Treatment.class
+        verify(request)
+                .getRequestDispatcher(
+                        "addTreatment.jsp"
                 );
 
-        verify(treatmentService)
-                .addTreatment(
-                        treatmentCaptor.capture()
+        verify(dispatcher)
+                .forward(
+                        request,
+                        response
                 );
-
-        Treatment treatment =
-                treatmentCaptor.getValue();
-
-        assertEquals(
-                "Dental Cleaning",
-                treatment.getTreatmentType()
-        );
-
-        assertEquals(
-                5000.0,
-                treatment.getTreatmentPrice()
-        );
-
-        verify(request).setAttribute(
-                "treatment",
-                treatment
-        );
-
-        verify(request).setAttribute(
-                "successMessage",
-                "Treatment added successfully."
-        );
-
-        verify(request).getRequestDispatcher(
-                "treatmentDetails.jsp"
-        );
-
-        verify(dispatcher).forward(
-                request,
-                response
-        );
     }
 
     @Test
-    void shouldShowErrorWhenAddingTreatmentFails()
+    void shouldRejectStaffWhenOpeningAddTreatmentPage()
             throws Exception {
 
-        when(request.getParameter("action"))
+        when(session.getAttribute(
+                "role"))
+                .thenReturn("STAFF");
+
+        when(request.getParameter(
+                "action"))
                 .thenReturn("add");
 
-        when(request.getParameter("treatmentType"))
-                .thenReturn(
-                        "Dental Cleaning"
-                );
-
-        when(request.getParameter("treatmentPrice"))
-                .thenReturn(
-                        "5000"
-                );
-
-        when(treatmentService.addTreatment(
-                any(Treatment.class)))
-                .thenReturn(false);
-
-        treatmentServlet.doPost(
+        treatmentServlet.doGet(
                 request,
                 response
         );
 
-        verify(request).setAttribute(
-                "errorMessage",
-                "Unable to add treatment."
-        );
-
-        verify(request).getRequestDispatcher(
-                "addTreatment.jsp"
-        );
-
-        verify(dispatcher).forward(
-                request,
-                response
-        );
-    }
-
-    @Test
-    void shouldRejectInvalidTreatmentPrice()
-            throws Exception {
-
-        when(request.getParameter("action"))
-                .thenReturn("add");
-
-        when(request.getParameter("treatmentType"))
-                .thenReturn(
-                        "Dental Filling"
+        verify(response)
+                .sendError(
+                        HttpServletResponse.SC_FORBIDDEN,
+                        "Admin access required."
                 );
 
-        when(request.getParameter("treatmentPrice"))
-                .thenReturn(
-                        "invalid"
-                );
-
-        treatmentServlet.doPost(
-                request,
-                response
-        );
-
-        verify(request).setAttribute(
-                "errorMessage",
-                "Invalid treatment price."
-        );
-
-        verify(request).getRequestDispatcher(
-                "addTreatment.jsp"
-        );
-
-        verify(dispatcher).forward(
-                request,
-                response
+        verifyNoInteractions(
+                treatmentService
         );
     }
 
@@ -277,13 +216,17 @@ class TreatmentServletTest {
                 new Treatment(
                         3,
                         "Root Canal",
-                        25000.0
+                        12000.00
                 );
 
-        when(request.getParameter("treatmentId"))
+        when(request.getParameter(
+                "treatmentId"))
                 .thenReturn("3");
 
-        when(treatmentService.getTreatmentById(3))
+        when(treatmentService
+                .getTreatmentById(
+                        3
+                ))
                 .thenReturn(treatment);
 
         treatmentServlet.doGet(
@@ -292,34 +235,44 @@ class TreatmentServletTest {
         );
 
         verify(treatmentService)
-                .getTreatmentById(3);
+                .getTreatmentById(
+                        3
+                );
 
-        verify(request).setAttribute(
-                "treatment",
-                treatment
-        );
+        verify(request)
+                .setAttribute(
+                        "treatment",
+                        treatment
+                );
 
-        verify(request).getRequestDispatcher(
-                "treatmentDetails.jsp"
-        );
+        verify(request)
+                .getRequestDispatcher(
+                        "treatmentDetails.jsp"
+                );
 
-        verify(dispatcher).forward(
-                request,
-                response
-        );
+        verify(dispatcher)
+                .forward(
+                        request,
+                        response
+                );
     }
 
     @Test
     void shouldShowErrorWhenTreatmentDoesNotExist()
             throws Exception {
 
-        when(request.getParameter("treatmentId"))
-                .thenReturn("99");
+        when(request.getParameter(
+                "treatmentId"))
+                .thenReturn("999");
 
-        when(treatmentService.getTreatmentById(99))
+        when(treatmentService
+                .getTreatmentById(
+                        999
+                ))
                 .thenReturn(null);
 
-        when(treatmentService.getAllTreatments())
+        when(treatmentService
+                .getAllTreatments())
                 .thenReturn(List.of());
 
         treatmentServlet.doGet(
@@ -327,32 +280,28 @@ class TreatmentServletTest {
                 response
         );
 
-        verify(request).setAttribute(
-                "errorMessage",
-                "Treatment not found."
-        );
+        verify(request)
+                .setAttribute(
+                        "errorMessage",
+                        "Treatment not found."
+                );
 
-        verify(treatmentService)
-                .getAllTreatments();
-
-        verify(request).getRequestDispatcher(
-                "treatmentList.jsp"
-        );
-
-        verify(dispatcher).forward(
-                request,
-                response
-        );
+        verify(request)
+                .getRequestDispatcher(
+                        "treatmentList.jsp"
+                );
     }
 
     @Test
     void shouldRejectInvalidTreatmentId()
             throws Exception {
 
-        when(request.getParameter("treatmentId"))
-                .thenReturn("invalid");
+        when(request.getParameter(
+                "treatmentId"))
+                .thenReturn("ABC");
 
-        when(treatmentService.getAllTreatments())
+        when(treatmentService
+                .getAllTreatments())
                 .thenReturn(List.of());
 
         treatmentServlet.doGet(
@@ -360,68 +309,410 @@ class TreatmentServletTest {
                 response
         );
 
-        verify(request).setAttribute(
-                "errorMessage",
-                "Invalid treatment ID."
-        );
+        verify(request)
+                .setAttribute(
+                        "errorMessage",
+                        "Invalid treatment ID."
+                );
 
-        verify(treatmentService)
-                .getAllTreatments();
-
-        verify(request).getRequestDispatcher(
-                "treatmentList.jsp"
-        );
-
-        verify(dispatcher).forward(
-                request,
-                response
-        );
+        verify(request)
+                .getRequestDispatcher(
+                        "treatmentList.jsp"
+                );
     }
 
     @Test
-    void shouldDisplayAllTreatmentsWhenTreatmentIdIsNotProvided()
+    void shouldRejectTreatmentWhenRequiredFieldsAreEmpty()
             throws Exception {
 
-        List<Treatment> treatments =
-                List.of(
-                        new Treatment(
-                                1,
-                                "Dental Cleaning",
-                                5000.0
-                        ),
-                        new Treatment(
-                                2,
-                                "Dental Filling",
-                                8000.0
-                        )
+        when(request.getParameter(
+                "action"))
+                .thenReturn("add");
+
+        when(request.getParameter(
+                "treatmentType"))
+                .thenReturn("");
+
+        when(request.getParameter(
+                "treatmentPrice"))
+                .thenReturn("");
+
+        treatmentServlet.doPost(
+                request,
+                response
+        );
+
+        verify(request)
+                .setAttribute(
+                        "errorMessage",
+                        "All treatment fields are required."
                 );
 
-        when(request.getParameter("treatmentId"))
-                .thenReturn(null);
+        verify(request)
+                .getRequestDispatcher(
+                        "addTreatment.jsp"
+                );
 
-        when(treatmentService.getAllTreatments())
-                .thenReturn(treatments);
+        verify(treatmentService, never())
+                .addTreatment(
+                        any(Treatment.class)
+                );
+    }
+
+    @Test
+    void shouldAddTreatmentWhenDetailsAreValid()
+            throws Exception {
+
+        when(request.getParameter(
+                "action"))
+                .thenReturn("add");
+
+        when(request.getParameter(
+                "treatmentType"))
+                .thenReturn(
+                        "Cleaning"
+                );
+
+        when(request.getParameter(
+                "treatmentPrice"))
+                .thenReturn(
+                        "5000"
+                );
+
+        when(treatmentService
+                .addTreatment(
+                        any(Treatment.class)
+                ))
+                .thenReturn(true);
+
+        treatmentServlet.doPost(
+                request,
+                response
+        );
+
+        ArgumentCaptor<Treatment> captor =
+                ArgumentCaptor.forClass(
+                        Treatment.class
+                );
+
+        verify(treatmentService)
+                .addTreatment(
+                        captor.capture()
+                );
+
+        Treatment treatment =
+                captor.getValue();
+
+        assertEquals(
+                "Cleaning",
+                treatment.getTreatmentType()
+        );
+
+        assertEquals(
+                5000.00,
+                treatment.getTreatmentPrice()
+        );
+
+        verify(request)
+                .setAttribute(
+                        "successMessage",
+                        "Treatment added successfully."
+                );
+
+        verify(request)
+                .getRequestDispatcher(
+                        "treatmentDetails.jsp"
+                );
+
+        verify(dispatcher)
+                .forward(
+                        request,
+                        response
+                );
+    }
+
+    @Test
+    void shouldShowErrorWhenAddingTreatmentFails()
+            throws Exception {
+
+        when(request.getParameter(
+                "action"))
+                .thenReturn("add");
+
+        when(request.getParameter(
+                "treatmentType"))
+                .thenReturn(
+                        "Cleaning"
+                );
+
+        when(request.getParameter(
+                "treatmentPrice"))
+                .thenReturn(
+                        "5000"
+                );
+
+        when(treatmentService
+                .addTreatment(
+                        any(Treatment.class)
+                ))
+                .thenReturn(false);
+
+        treatmentServlet.doPost(
+                request,
+                response
+        );
+
+        verify(request)
+                .setAttribute(
+                        "errorMessage",
+                        "Unable to add treatment."
+                );
+
+        verify(request)
+                .getRequestDispatcher(
+                        "addTreatment.jsp"
+                );
+    }
+
+    @Test
+    void shouldRejectInvalidTreatmentPrice()
+            throws Exception {
+
+        when(request.getParameter(
+                "action"))
+                .thenReturn("add");
+
+        when(request.getParameter(
+                "treatmentType"))
+                .thenReturn(
+                        "Cleaning"
+                );
+
+        when(request.getParameter(
+                "treatmentPrice"))
+                .thenReturn(
+                        "invalid"
+                );
+
+        treatmentServlet.doPost(
+                request,
+                response
+        );
+
+        verify(request)
+                .setAttribute(
+                        "errorMessage",
+                        "Invalid treatment price."
+                );
+
+        verify(request)
+                .getRequestDispatcher(
+                        "addTreatment.jsp"
+                );
+
+        verify(treatmentService, never())
+                .addTreatment(
+                        any(Treatment.class)
+                );
+    }
+
+    @Test
+    void shouldOpenEditTreatmentPageForAdmin()
+            throws Exception {
+
+        Treatment treatment =
+                new Treatment(
+                        3,
+                        "Cleaning",
+                        5000.00
+                );
+
+        when(request.getParameter(
+                "action"))
+                .thenReturn("edit");
+
+        when(request.getParameter(
+                "treatmentId"))
+                .thenReturn("3");
+
+        when(treatmentService
+                .getTreatmentById(
+                        3
+                ))
+                .thenReturn(treatment);
 
         treatmentServlet.doGet(
                 request,
                 response
         );
 
-        verify(treatmentService)
-                .getAllTreatments();
+        verify(request)
+                .setAttribute(
+                        "treatment",
+                        treatment
+                );
 
-        verify(request).setAttribute(
-                "treatments",
-                treatments
-        );
+        verify(request)
+                .getRequestDispatcher(
+                        "editTreatment.jsp"
+                );
 
-        verify(request).getRequestDispatcher(
-                "treatmentList.jsp"
-        );
+        verify(dispatcher)
+                .forward(
+                        request,
+                        response
+                );
+    }
 
-        verify(dispatcher).forward(
+    @Test
+    void shouldUpdateTreatmentWhenDetailsAreValid()
+            throws Exception {
+
+        Treatment existingTreatment =
+                new Treatment(
+                        3,
+                        "Cleaning",
+                        5000.00
+                );
+
+        when(request.getParameter(
+                "action"))
+                .thenReturn("update");
+
+        when(request.getParameter(
+                "treatmentId"))
+                .thenReturn("3");
+
+        when(request.getParameter(
+                "treatmentType"))
+                .thenReturn(
+                        "Advanced Cleaning"
+                );
+
+        when(request.getParameter(
+                "treatmentPrice"))
+                .thenReturn(
+                        "6000"
+                );
+
+        when(treatmentService
+                .getTreatmentById(
+                        3
+                ))
+                .thenReturn(
+                        existingTreatment
+                );
+
+        when(treatmentService
+                .updateTreatment(
+                        any(Treatment.class)
+                ))
+                .thenReturn(true);
+
+        treatmentServlet.doPost(
                 request,
                 response
+        );
+
+        ArgumentCaptor<Treatment> captor =
+                ArgumentCaptor.forClass(
+                        Treatment.class
+                );
+
+        verify(treatmentService)
+                .updateTreatment(
+                        captor.capture()
+                );
+
+        Treatment treatment =
+                captor.getValue();
+
+        assertEquals(
+                3,
+                treatment.getTreatmentId()
+        );
+
+        assertEquals(
+                "Advanced Cleaning",
+                treatment.getTreatmentType()
+        );
+
+        assertEquals(
+                6000.00,
+                treatment.getTreatmentPrice()
+        );
+
+        verify(request)
+                .setAttribute(
+                        "successMessage",
+                        "Treatment updated successfully."
+                );
+
+        verify(request)
+                .getRequestDispatcher(
+                        "treatmentDetails.jsp"
+                );
+    }
+
+    @Test
+    void shouldDeleteTreatmentWhenTreatmentIdIsValid()
+            throws Exception {
+
+        when(request.getParameter(
+                "action"))
+                .thenReturn("delete");
+
+        when(request.getParameter(
+                "treatmentId"))
+                .thenReturn("3");
+
+        when(treatmentService
+                .deleteTreatment(
+                        3
+                ))
+                .thenReturn(true);
+
+        treatmentServlet.doPost(
+                request,
+                response
+        );
+
+        verify(treatmentService)
+                .deleteTreatment(
+                        3
+                );
+
+        verify(response)
+                .sendRedirect(
+                        "treatment"
+                );
+    }
+
+    @Test
+    void shouldRejectStaffWhenPostingTreatmentChange()
+            throws Exception {
+
+        when(session.getAttribute(
+                "role"))
+                .thenReturn("STAFF");
+
+        when(request.getParameter(
+                "action"))
+                .thenReturn("add");
+
+        treatmentServlet.doPost(
+                request,
+                response
+        );
+
+        verify(response)
+                .sendError(
+                        HttpServletResponse.SC_FORBIDDEN,
+                        "Admin access required."
+                );
+
+        verifyNoInteractions(
+                treatmentService
         );
     }
 
@@ -429,21 +720,8 @@ class TreatmentServletTest {
     void shouldThrowServletExceptionWhenTreatmentServiceFails()
             throws Exception {
 
-        when(request.getParameter("action"))
-                .thenReturn("add");
-
-        when(request.getParameter("treatmentType"))
-                .thenReturn(
-                        "Dental Cleaning"
-                );
-
-        when(request.getParameter("treatmentPrice"))
-                .thenReturn(
-                        "5000"
-                );
-
-        when(treatmentService.addTreatment(
-                any(Treatment.class)))
+        when(treatmentService
+                .getAllTreatments())
                 .thenThrow(
                         new SQLException(
                                 "Database error"
@@ -454,130 +732,16 @@ class TreatmentServletTest {
                 assertThrows(
                         ServletException.class,
                         () ->
-                                treatmentServlet.doPost(
-                                        request,
-                                        response
-                                )
+                                treatmentServlet
+                                        .doGet(
+                                                request,
+                                                response
+                                        )
                 );
 
         assertEquals(
-                "Unable to process treatment request.",
+                "Unable to retrieve treatment.",
                 exception.getMessage()
-        );
-    }
-
-    @Test
-    void shouldUpdateTreatmentWhenDetailsAreValid()
-            throws Exception {
-
-        Treatment existingTreatment =
-                new Treatment(
-                        1,
-                        "Dental Filling",
-                        8000.0
-                );
-
-        when(request.getParameter("action"))
-                .thenReturn("update");
-
-        when(request.getParameter("treatmentId"))
-                .thenReturn("1");
-
-        when(request.getParameter("treatmentType"))
-                .thenReturn(
-                        "Dental Filling"
-                );
-
-        when(request.getParameter("treatmentPrice"))
-                .thenReturn(
-                        "8500"
-                );
-
-        when(treatmentService.getTreatmentById(1))
-                .thenReturn(
-                        existingTreatment
-                );
-
-        when(treatmentService.updateTreatment(
-                any(Treatment.class)))
-                .thenReturn(true);
-
-        treatmentServlet.doPost(
-                request,
-                response
-        );
-
-        ArgumentCaptor<Treatment> treatmentCaptor =
-                ArgumentCaptor.forClass(
-                        Treatment.class
-                );
-
-        verify(treatmentService)
-                .updateTreatment(
-                        treatmentCaptor.capture()
-                );
-
-        Treatment updatedTreatment =
-                treatmentCaptor.getValue();
-
-        assertEquals(
-                1,
-                updatedTreatment.getTreatmentId()
-        );
-
-        assertEquals(
-                "Dental Filling",
-                updatedTreatment.getTreatmentType()
-        );
-
-        assertEquals(
-                8500.0,
-                updatedTreatment.getTreatmentPrice()
-        );
-
-        verify(request).setAttribute(
-                "treatment",
-                updatedTreatment
-        );
-
-        verify(request).setAttribute(
-                "successMessage",
-                "Treatment updated successfully."
-        );
-
-        verify(request).getRequestDispatcher(
-                "treatmentDetails.jsp"
-        );
-
-        verify(dispatcher).forward(
-                request,
-                response
-        );
-    }
-
-    @Test
-    void shouldDeleteTreatmentWhenTreatmentIdIsValid()
-            throws Exception {
-
-        when(request.getParameter("action"))
-                .thenReturn("delete");
-
-        when(request.getParameter("treatmentId"))
-                .thenReturn("1");
-
-        when(treatmentService.deleteTreatment(1))
-                .thenReturn(true);
-
-        treatmentServlet.doPost(
-                request,
-                response
-        );
-
-        verify(treatmentService)
-                .deleteTreatment(1);
-
-        verify(response).sendRedirect(
-                "treatment"
         );
     }
 }

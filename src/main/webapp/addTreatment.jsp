@@ -8,8 +8,18 @@
         return;
     }
 
+    if (!"ADMIN".equals(session.getAttribute("role"))) {
+        response.sendError(
+                HttpServletResponse.SC_FORBIDDEN,
+                "Admin access required."
+        );
+        return;
+    }
+
     String errorMessage =
-            (String) request.getAttribute("errorMessage");
+            (String) request.getAttribute(
+                    "errorMessage"
+            );
 
     String treatmentType =
             request.getParameter("treatmentType") != null
@@ -74,7 +84,7 @@
         <a href="treatment"
            class="back-button">
 
-            Treatment Directory
+            Back to Treatments
 
         </a>
 

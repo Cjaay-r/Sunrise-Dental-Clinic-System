@@ -11,6 +11,14 @@
         return;
     }
 
+    String role =
+            (String) session.getAttribute(
+                    "role"
+            );
+
+    boolean isAdmin =
+            "ADMIN".equals(role);
+
     List<Treatment> treatments =
             (List<Treatment>) request.getAttribute(
                     "treatments"
@@ -71,7 +79,7 @@
 
             <p>
                 View available treatments and
-                manage treatment prices.
+                current treatment prices.
             </p>
 
         </div>
@@ -91,10 +99,6 @@
         <div class="action-panel">
 
             <div class="panel-heading">
-
-                <div class="panel-number">
-                    01
-                </div>
 
                 <div>
 
@@ -141,7 +145,6 @@
 
                 </div>
 
-
                 <button type="submit"
                         class="primary-button">
 
@@ -156,25 +159,36 @@
 
         <div class="treatment-add-panel">
 
-            <div class="panel-number">
-                02
-            </div>
+            <% if (isAdmin) { %>
 
-            <h2>
-                Add New Treatment
-            </h2>
+                <h2>
+                    Add New Treatment
+                </h2>
 
-            <p>
-                Add a treatment type and
-                set its current price.
-            </p>
+                <p>
+                    Add a treatment type and
+                    set its current price.
+                </p>
 
-            <a href="treatment?action=add"
-               class="secondary-button">
+                <a href="treatment?action=add"
+                   class="secondary-button">
 
-                Add Treatment
+                    Add Treatment
 
-            </a>
+                </a>
+
+            <% } else { %>
+
+                <h2>
+                    Treatment Records
+                </h2>
+
+                <p>
+                    View available dental
+                    treatments and prices.
+                </p>
+
+            <% } %>
 
         </div>
 
@@ -196,7 +210,6 @@
                 </h2>
 
             </div>
-
 
             <span class="treatment-record-count">
 
@@ -242,7 +255,6 @@
 
                     </thead>
 
-
                     <tbody>
 
                     <% for (Treatment treatment
@@ -284,14 +296,17 @@
 
                                     </a>
 
+                                    <% if (isAdmin) { %>
 
-                                    <a
-                                        href="treatment?action=edit&treatmentId=<%= treatment.getTreatmentId() %>"
-                                        class="treatment-action-link">
+                                        <a
+                                            href="treatment?action=edit&treatmentId=<%= treatment.getTreatmentId() %>"
+                                            class="treatment-action-link">
 
-                                        Edit
+                                            Edit
 
-                                    </a>
+                                        </a>
+
+                                    <% } %>
 
                                 </div>
 
@@ -320,12 +335,16 @@
                     treatment records available.
                 </p>
 
-                <a href="treatment?action=add"
-                   class="primary-link">
+                <% if (isAdmin) { %>
 
-                    Add First Treatment
+                    <a href="treatment?action=add"
+                       class="primary-link">
 
-                </a>
+                        Add First Treatment
+
+                    </a>
+
+                <% } %>
 
             </div>
 

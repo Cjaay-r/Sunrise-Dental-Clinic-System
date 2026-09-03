@@ -10,6 +10,14 @@
         return;
     }
 
+    if (!"ADMIN".equals(session.getAttribute("role"))) {
+        response.sendError(
+                HttpServletResponse.SC_FORBIDDEN,
+                "Admin access required."
+        );
+        return;
+    }
+
     Treatment treatment =
             (Treatment) request.getAttribute(
                     "treatment"
@@ -87,10 +95,11 @@
 
         </div>
 
-        <a href="treatment?treatmentId=<%= treatment.getTreatmentId() %>"
-           class="back-button">
+        <a
+            href="treatment?treatmentId=<%= treatment.getTreatmentId() %>"
+            class="back-button">
 
-            Treatment Details
+            Back to Treatment Details
 
         </a>
 
@@ -184,8 +193,9 @@
 
         <div class="details-actions">
 
-            <a href="treatment?treatmentId=<%= treatment.getTreatmentId() %>"
-               class="secondary-button">
+            <a
+                href="treatment?treatmentId=<%= treatment.getTreatmentId() %>"
+                class="secondary-button">
 
                 Cancel
 

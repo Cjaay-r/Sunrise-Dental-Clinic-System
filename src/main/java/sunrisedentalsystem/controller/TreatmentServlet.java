@@ -17,7 +17,8 @@ import sunrisedentalsystem.service.TreatmentService;
 import sunrisedentalsystem.service.TreatmentServiceImpl;
 
 @WebServlet("/treatment")
-public class TreatmentServlet extends HttpServlet {
+public class TreatmentServlet
+        extends HttpServlet {
 
     private static final long serialVersionUID = 1L;
 
@@ -71,6 +72,19 @@ public class TreatmentServlet extends HttpServlet {
                 request.getParameter(
                         "action"
                 );
+
+        if (("add".equals(action)
+                || "edit".equals(action)
+                || "delete".equals(action))
+                && !isAdmin(session)) {
+
+            response.sendError(
+                    HttpServletResponse.SC_FORBIDDEN,
+                    "Admin access required."
+            );
+
+            return;
+        }
 
         String treatmentIdText =
                 request.getParameter(
@@ -217,6 +231,16 @@ public class TreatmentServlet extends HttpServlet {
             return;
         }
 
+        if (!isAdmin(session)) {
+
+            response.sendError(
+                    HttpServletResponse.SC_FORBIDDEN,
+                    "Admin access required."
+            );
+
+            return;
+        }
+
         String action =
                 request.getParameter(
                         "action"
@@ -248,8 +272,7 @@ public class TreatmentServlet extends HttpServlet {
             } else {
 
                 response.sendError(
-                        HttpServletResponse
-                                .SC_BAD_REQUEST,
+                        HttpServletResponse.SC_BAD_REQUEST,
                         "Invalid treatment action."
                 );
             }
@@ -692,6 +715,16 @@ public class TreatmentServlet extends HttpServlet {
         showTreatmentList(
                 request,
                 response
+        );
+    }
+
+    private boolean isAdmin(
+            HttpSession session) {
+
+        return "ADMIN".equals(
+                session.getAttribute(
+                        "role"
+                )
         );
     }
 

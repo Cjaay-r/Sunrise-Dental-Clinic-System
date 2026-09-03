@@ -20,6 +20,14 @@
                     "successMessage"
             );
 
+    String role =
+            (String) session.getAttribute(
+                    "role"
+            );
+
+    boolean isAdmin =
+            "ADMIN".equals(role);
+
     if (treatment == null) {
         response.sendRedirect("treatment");
         return;
@@ -78,7 +86,7 @@
         <a href="treatment"
            class="back-button">
 
-            Treatment Directory
+            Back to Treatments
 
         </a>
 
@@ -174,20 +182,26 @@
             </a>
 
 
-            <a href="treatment?action=edit&treatmentId=<%= treatment.getTreatmentId() %>"
-               class="primary-link">
+            <% if (isAdmin) { %>
 
-                Edit Treatment
+                <a
+                    href="treatment?action=edit&treatmentId=<%= treatment.getTreatmentId() %>"
+                    class="primary-link">
 
-            </a>
+                    Edit Treatment
+
+                </a>
 
 
-            <a href="treatment?action=delete&treatmentId=<%= treatment.getTreatmentId() %>"
-               class="treatment-danger-link">
+                <a
+                    href="treatment?action=delete&treatmentId=<%= treatment.getTreatmentId() %>"
+                    class="treatment-danger-link">
 
-                Delete Treatment
+                    Delete Treatment
 
-            </a>
+                </a>
+
+            <% } %>
 
         </div>
 
