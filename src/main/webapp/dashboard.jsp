@@ -11,7 +11,9 @@
             );
 
     if (loggedInUser == null) {
+
         response.sendRedirect("login.jsp");
+
         return;
     }
 
@@ -138,6 +140,14 @@
 
                 </a>
 
+                <a
+                    href="<%= request.getContextPath() %>/report"
+                    class="nav-item">
+
+                    Reports
+
+                </a>
+
             <% } %>
 
 
@@ -186,10 +196,8 @@
                 </p>
 
                 <h1>
-
                     Welcome back,
                     <%= loggedInUser.getUsername() %>
-
                 </h1>
 
             </div>
@@ -322,8 +330,19 @@
                     </h3>
 
                     <p>
-                        Register patients and access
-                        patient information.
+
+                        <% if (isStaff) { %>
+
+                            Register patients and access
+                            patient information.
+
+                        <% } else { %>
+
+                            Search and review
+                            patient information.
+
+                        <% } %>
+
                     </p>
 
                 </div>
@@ -481,6 +500,34 @@
 
                 </a>
 
+
+                <a
+                    href="<%= request.getContextPath() %>/report"
+                    class="dashboard-card">
+
+                    <div class="card-number">
+                        07
+                    </div>
+
+                    <div class="card-content">
+
+                        <h3>
+                            Reports
+                        </h3>
+
+                        <p>
+                            Review clinic activity,
+                            revenue and treatment trends.
+                        </p>
+
+                    </div>
+
+                    <div class="card-arrow">
+                        →
+                    </div>
+
+                </a>
+
             <% } %>
 
 
@@ -491,7 +538,7 @@
                 <div class="card-number">
 
                     <%= isAdmin
-                            ? "07"
+                            ? "08"
                             : "06" %>
 
                 </div>

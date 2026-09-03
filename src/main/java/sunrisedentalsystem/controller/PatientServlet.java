@@ -69,6 +69,21 @@ public class PatientServlet
             return;
         }
 
+        String role =
+                (String) session.getAttribute(
+                        "role"
+                );
+
+        if (!"STAFF".equals(role)) {
+
+            response.sendError(
+                    HttpServletResponse.SC_FORBIDDEN,
+                    "Staff access required."
+            );
+
+            return;
+        }
+
         String patientName =
                 request.getParameter(
                         "patientName"

@@ -72,6 +72,10 @@ class PatientServletTest {
                 "loggedInUser"))
                 .thenReturn(loggedInUser);
 
+        when(session.getAttribute(
+                "role"))
+                .thenReturn("STAFF");
+
         when(request.getRequestDispatcher(
                 anyString()))
                 .thenReturn(dispatcher);
@@ -85,6 +89,31 @@ class PatientServletTest {
     @Test
     void shouldOpenPatientSearchPage()
             throws Exception {
+
+        patientServlet.doGet(
+                request,
+                response
+        );
+
+        verify(request)
+                .getRequestDispatcher(
+                        "searchPatient.jsp"
+                );
+
+        verify(dispatcher)
+                .forward(
+                        request,
+                        response
+                );
+    }
+
+    @Test
+    void shouldAllowAdminToOpenPatientSearchPage()
+            throws Exception {
+
+        when(session.getAttribute(
+                "role"))
+                .thenReturn("ADMIN");
 
         patientServlet.doGet(
                 request,
@@ -123,6 +152,30 @@ class PatientServletTest {
         verify(response)
                 .sendRedirect(
                         "/sunrisedentalsystem/login.jsp"
+                );
+
+        verifyNoInteractions(
+                patientService
+        );
+    }
+
+    @Test
+    void shouldRejectAdminPatientRegistration()
+            throws Exception {
+
+        when(session.getAttribute(
+                "role"))
+                .thenReturn("ADMIN");
+
+        patientServlet.doPost(
+                request,
+                response
+        );
+
+        verify(response)
+                .sendError(
+                        HttpServletResponse.SC_FORBIDDEN,
+                        "Staff access required."
                 );
 
         verifyNoInteractions(

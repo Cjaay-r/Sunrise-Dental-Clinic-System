@@ -8,6 +8,21 @@
         return;
     }
 
+    String role =
+            (String) session.getAttribute(
+                    "role"
+            );
+
+    if (!"STAFF".equals(role)) {
+
+        response.sendError(
+                403,
+                "Staff access required."
+        );
+
+        return;
+    }
+
     String errorMessage =
             (String) request.getAttribute(
                     "errorMessage"
@@ -95,7 +110,9 @@
         <% if (errorMessage != null) { %>
 
             <div class="form-message error">
+
                 <%= errorMessage %>
+
             </div>
 
         <% } %>

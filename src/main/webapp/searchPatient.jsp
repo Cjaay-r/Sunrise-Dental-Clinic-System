@@ -11,6 +11,14 @@
         return;
     }
 
+    String role =
+            (String) session.getAttribute(
+                    "role"
+            );
+
+    boolean isStaff =
+            "STAFF".equals(role);
+
     String errorMessage =
             (String) request.getAttribute(
                     "errorMessage"
@@ -210,21 +218,36 @@
 
         <div class="patient-register-panel">
 
-            <h2>
-                New Patient?
-            </h2>
+            <% if (isStaff) { %>
 
-            <p>
-                Register a new patient and
-                save their information in the system.
-            </p>
+                <h2>
+                    New Patient?
+                </h2>
 
-            <a href="registerPatient.jsp"
-               class="secondary-button">
+                <p>
+                    Register a new patient and
+                    save their information in the system.
+                </p>
 
-                Register Patient
+                <a href="registerPatient.jsp"
+                   class="secondary-button">
 
-            </a>
+                    Register Patient
+
+                </a>
+
+            <% } else { %>
+
+                <h2>
+                    Patient Records
+                </h2>
+
+                <p>
+                    Administrators can search and
+                    review registered patient information.
+                </p>
+
+            <% } %>
 
         </div>
 
