@@ -1,11 +1,15 @@
 const printReceiptButton =
-    document.getElementById("printReceiptButton");
+        document.getElementById(
+                "printReceiptButton"
+        );
 
 if (printReceiptButton) {
+
     printReceiptButton.addEventListener(
-        "click",
-        function () {
-            window.print();
-        }
+            "click",
+            function () {
+
+                window.print();
+            }
     );
 }
