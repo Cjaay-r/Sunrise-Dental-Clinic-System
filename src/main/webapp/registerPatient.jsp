@@ -27,6 +27,11 @@
             request.getParameter("contactNumber") != null
             ? request.getParameter("contactNumber")
             : "";
+
+    String email =
+            request.getParameter("email") != null
+            ? request.getParameter("email")
+            : "";
 %>
 
 <!DOCTYPE html>
@@ -69,7 +74,7 @@
             </h1>
 
             <p>
-                Enter the patient's basic information
+                Enter the patient's information
                 to create a new patient record.
             </p>
 
@@ -154,6 +159,24 @@
                     title="Enter a 10-digit contact number starting with 0"
                     autocomplete="tel"
                     required>
+
+            </div>
+
+
+            <div class="form-group">
+
+                <label for="email">
+                    Email Address
+                </label>
+
+                <input
+                    type="email"
+                    id="email"
+                    name="email"
+                    maxlength="150"
+                    placeholder="Optional email address"
+                    value="<%= email %>"
+                    autocomplete="email">
 
             </div>
 

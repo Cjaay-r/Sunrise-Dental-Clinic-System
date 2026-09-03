@@ -81,7 +81,8 @@ class PatientDAOTest {
                         0,
                         "Kyle John",
                         "Colombo",
-                        "0771234567"
+                        "0771234567",
+                        "kyle@example.com"
                 );
 
         when(connection.prepareStatement(
@@ -138,6 +139,12 @@ class PatientDAOTest {
                         3,
                         "0771234567"
                 );
+
+        verify(preparedStatement)
+                .setString(
+                        4,
+                        "kyle@example.com"
+                );
     }
 
     @Test
@@ -164,6 +171,11 @@ class PatientDAOTest {
         assertEquals(
                 "Kyle John",
                 patient.getPatientName()
+        );
+
+        assertEquals(
+                "kyle@example.com",
+                patient.getEmail()
         );
 
         verify(preparedStatement)
@@ -197,6 +209,11 @@ class PatientDAOTest {
         assertEquals(
                 "0771234567",
                 patient.getContactNumber()
+        );
+
+        assertEquals(
+                "kyle@example.com",
+                patient.getEmail()
         );
 
         verify(preparedStatement)
@@ -251,6 +268,13 @@ class PatientDAOTest {
                         .getPatientName()
         );
 
+        assertEquals(
+                "kyle@example.com",
+                patients
+                        .get(0)
+                        .getEmail()
+        );
+
         verify(preparedStatement)
                 .setString(
                         1,
@@ -300,6 +324,13 @@ class PatientDAOTest {
                         .get(0)
                         .getPatientId()
         );
+
+        assertEquals(
+                "kyle@example.com",
+                patients
+                        .get(0)
+                        .getEmail()
+        );
     }
 
     private void prepareSinglePatientResult()
@@ -345,6 +376,12 @@ class PatientDAOTest {
                 "contact_number"))
                 .thenReturn(
                         "0771234567"
+                );
+
+        when(resultSet.getString(
+                "email"))
+                .thenReturn(
+                        "kyle@example.com"
                 );
     }
 }

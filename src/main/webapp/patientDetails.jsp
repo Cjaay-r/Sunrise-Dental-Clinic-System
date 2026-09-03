@@ -24,6 +24,12 @@
         response.sendRedirect("patient");
         return;
     }
+
+    String patientEmail =
+            patient.getEmail() != null
+            && !patient.getEmail().trim().isEmpty()
+            ? patient.getEmail()
+            : "Not provided";
 %>
 
 <!DOCTYPE html>
@@ -84,7 +90,9 @@
     <% if (successMessage != null) { %>
 
         <div class="form-message success">
+
             <%= successMessage %>
+
         </div>
 
     <% } %>
@@ -149,6 +157,19 @@
 
                 <strong>
                     <%= patient.getContactNumber() %>
+                </strong>
+
+            </div>
+
+
+            <div class="detail-item">
+
+                <span>
+                    Email Address
+                </span>
+
+                <strong>
+                    <%= patientEmail %>
                 </strong>
 
             </div>

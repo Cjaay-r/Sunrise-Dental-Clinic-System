@@ -84,13 +84,18 @@ public class PatientServlet
                         "contactNumber"
                 );
 
+        String email =
+                request.getParameter(
+                        "email"
+                );
+
         if (isEmpty(patientName)
                 || isEmpty(address)
                 || isEmpty(contactNumber)) {
 
             request.setAttribute(
                     "errorMessage",
-                    "All patient fields are required."
+                    "All required patient fields must be completed."
             );
 
             RequestDispatcher dispatcher =
@@ -106,12 +111,36 @@ public class PatientServlet
             return;
         }
 
+        if (!isEmpty(email)
+                && !isValidEmail(email)) {
+
+            request.setAttribute(
+                    "errorMessage",
+                    "Enter a valid email address."
+            );
+
+            request.getRequestDispatcher(
+                    "registerPatient.jsp"
+            ).forward(
+                    request,
+                    response
+            );
+
+            return;
+        }
+
+        String patientEmail =
+                isEmpty(email)
+                ? null
+                : email.trim();
+
         Patient patient =
                 new Patient(
                         0,
                         patientName.trim(),
                         address.trim(),
-                        contactNumber.trim()
+                        contactNumber.trim(),
+                        patientEmail
                 );
 
         try {
@@ -435,6 +464,14 @@ public class PatientServlet
                     e
             );
         }
+    }
+
+    private boolean isValidEmail(
+            String email) {
+
+        return email.trim().matches(
+                "^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$"
+        );
     }
 
     private boolean isEmpty(

@@ -29,6 +29,8 @@ import sunrisedentalsystem.service.AppointmentService;
 import sunrisedentalsystem.service.AppointmentServiceImpl;
 import sunrisedentalsystem.service.DentistService;
 import sunrisedentalsystem.service.DentistServiceImpl;
+import sunrisedentalsystem.service.EmailService;
+import sunrisedentalsystem.service.EmailServiceImpl;
 import sunrisedentalsystem.service.PatientService;
 import sunrisedentalsystem.service.PatientServiceImpl;
 import sunrisedentalsystem.service.TreatmentService;
@@ -48,6 +50,8 @@ public class AppointmentServlet
 
     private TreatmentService treatmentService;
 
+    private EmailService emailService;
+
     public AppointmentServlet() {
     }
 
@@ -56,6 +60,29 @@ public class AppointmentServlet
 
         this.appointmentService =
                 appointmentService;
+    }
+
+    AppointmentServlet(
+            AppointmentService appointmentService,
+            PatientService patientService,
+            DentistService dentistService,
+            TreatmentService treatmentService,
+            EmailService emailService) {
+
+        this.appointmentService =
+                appointmentService;
+
+        this.patientService =
+                patientService;
+
+        this.dentistService =
+                dentistService;
+
+        this.treatmentService =
+                treatmentService;
+
+        this.emailService =
+                emailService;
     }
 
     @Override
@@ -92,6 +119,12 @@ public class AppointmentServlet
                     new TreatmentServiceImpl(
                             new TreatmentDAOImpl()
                     );
+        }
+
+        if (emailService == null) {
+
+            emailService =
+                    new EmailServiceImpl();
         }
     }
 
@@ -527,6 +560,12 @@ public class AppointmentServlet
                         registeredAppointment;
             }
 
+            String successMessage =
+                    createRegistrationSuccessMessage(
+                            appointmentDetails,
+                            selectedPatient
+                    );
+
             request.setAttribute(
                     "appointment",
                     appointmentDetails
@@ -534,7 +573,7 @@ public class AppointmentServlet
 
             request.setAttribute(
                     "successMessage",
-                    "Appointment registered successfully."
+                    successMessage
             );
 
             request.getRequestDispatcher(
@@ -641,14 +680,24 @@ public class AppointmentServlet
                                     appointmentNo
                             );
 
+            Appointment appointmentForEmail =
+                    updatedAppointment != null
+                    ? updatedAppointment
+                    : appointment;
+
+            String successMessage =
+                    createCancellationSuccessMessage(
+                            appointmentForEmail
+                    );
+
             request.setAttribute(
                     "appointment",
-                    updatedAppointment
+                    appointmentForEmail
             );
 
             request.setAttribute(
                     "successMessage",
-                    "Appointment cancelled successfully."
+                    successMessage
             );
 
             request.getRequestDispatcher(
@@ -676,6 +725,186 @@ public class AppointmentServlet
                     request,
                     response
             );
+        }
+    }
+
+    private String createRegistrationSuccessMessage(
+            Appointment appointment,
+            Patient selectedPatient) {
+
+        String defaultMessage =
+                "Appointment registered successfully.";
+
+        if (selectedPatient == null
+                || isEmpty(
+                        selectedPatient.getEmail()
+                )) {
+
+            return defaultMessage;
+        }
+
+        if (appointment == null
+                || appointment.getPatient() == null
+                || emailService == null) {
+
+            return defaultMessage
+                    + " Confirmation email could not be sent.";
+        }
+
+        appointment
+                .getPatient()
+                .setEmail(
+                        selectedPatient.getEmail()
+                );
+
+        boolean sent =
+                sendConfirmationEmailSafely(
+                        appointment
+                );
+
+        if (sent) {
+
+            return defaultMessage
+                    + " Confirmation email sent.";
+        }
+
+        return defaultMessage
+                + " Confirmation email could not be sent.";
+    }
+
+    private String createCancellationSuccessMessage(
+            Appointment appointment) {
+
+        String defaultMessage =
+                "Appointment cancelled successfully.";
+
+        if (appointment == null
+                || appointment.getPatient() == null) {
+
+            return defaultMessage;
+        }
+
+        String email =
+                findPatientEmail(
+                        appointment
+                );
+
+        if (isEmpty(email)) {
+
+            return defaultMessage;
+        }
+
+        appointment
+                .getPatient()
+                .setEmail(
+                        email
+                );
+
+        if (emailService == null) {
+
+            return defaultMessage
+                    + " Cancellation email could not be sent.";
+        }
+
+        boolean sent =
+                sendCancellationEmailSafely(
+                        appointment
+                );
+
+        if (sent) {
+
+            return defaultMessage
+                    + " Cancellation email sent.";
+        }
+
+        return defaultMessage
+                + " Cancellation email could not be sent.";
+    }
+
+    private String findPatientEmail(
+            Appointment appointment) {
+
+        if (appointment == null
+                || appointment.getPatient() == null) {
+
+            return null;
+        }
+
+        String existingEmail =
+                appointment
+                        .getPatient()
+                        .getEmail();
+
+        if (!isEmpty(existingEmail)) {
+
+            return existingEmail;
+        }
+
+        if (patientService == null) {
+
+            return null;
+        }
+
+        int patientId =
+                appointment
+                        .getPatient()
+                        .getPatientId();
+
+        if (patientId <= 0) {
+
+            return null;
+        }
+
+        try {
+
+            Patient patient =
+                    patientService
+                            .searchPatient(
+                                    patientId
+                            );
+
+            if (patient != null) {
+
+                return patient.getEmail();
+            }
+
+        } catch (SQLException e) {
+
+            return null;
+        }
+
+        return null;
+    }
+
+    private boolean sendConfirmationEmailSafely(
+            Appointment appointment) {
+
+        try {
+
+            return emailService
+                    .sendAppointmentConfirmation(
+                            appointment
+                    );
+
+        } catch (RuntimeException e) {
+
+            return false;
+        }
+    }
+
+    private boolean sendCancellationEmailSafely(
+            Appointment appointment) {
+
+        try {
+
+            return emailService
+                    .sendAppointmentCancellation(
+                            appointment
+                    );
+
+        } catch (RuntimeException e) {
+
+            return false;
         }
     }
 

@@ -1,6 +1,7 @@
 package sunrisedentalsystem.controller;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -130,7 +131,7 @@ class PatientServletTest {
     }
 
     @Test
-    void shouldRegisterPatientWhenDetailsAreValid()
+    void shouldRegisterPatientWithEmailWhenDetailsAreValid()
             throws Exception {
 
         when(request.getParameter(
@@ -149,6 +150,12 @@ class PatientServletTest {
                 "contactNumber"))
                 .thenReturn(
                         "0771234567"
+                );
+
+        when(request.getParameter(
+                "email"))
+                .thenReturn(
+                        "kyle@example.com"
                 );
 
         when(patientService
@@ -204,6 +211,11 @@ class PatientServletTest {
                 patient.getContactNumber()
         );
 
+        assertEquals(
+                "kyle@example.com",
+                patient.getEmail()
+        );
+
         verify(request)
                 .setAttribute(
                         "successMessage",
@@ -213,6 +225,121 @@ class PatientServletTest {
         verify(request)
                 .getRequestDispatcher(
                         "patientDetails.jsp"
+                );
+
+        verify(dispatcher)
+                .forward(
+                        request,
+                        response
+                );
+    }
+
+    @Test
+    void shouldRegisterPatientWithoutEmail()
+            throws Exception {
+
+        when(request.getParameter(
+                "patientName"))
+                .thenReturn(
+                        "David Silva"
+                );
+
+        when(request.getParameter(
+                "address"))
+                .thenReturn(
+                        "Kandy"
+                );
+
+        when(request.getParameter(
+                "contactNumber"))
+                .thenReturn(
+                        "0712345678"
+                );
+
+        when(request.getParameter(
+                "email"))
+                .thenReturn("");
+
+        when(patientService
+                .registerPatient(
+                        any(Patient.class)
+                ))
+                .thenAnswer(
+                        invocation ->
+                                invocation.getArgument(
+                                        0
+                                )
+                );
+
+        patientServlet.doPost(
+                request,
+                response
+        );
+
+        ArgumentCaptor<Patient> captor =
+                ArgumentCaptor.forClass(
+                        Patient.class
+                );
+
+        verify(patientService)
+                .registerPatient(
+                        captor.capture()
+                );
+
+        assertNull(
+                captor
+                        .getValue()
+                        .getEmail()
+        );
+    }
+
+    @Test
+    void shouldRejectInvalidEmail()
+            throws Exception {
+
+        when(request.getParameter(
+                "patientName"))
+                .thenReturn(
+                        "Kyle John"
+                );
+
+        when(request.getParameter(
+                "address"))
+                .thenReturn(
+                        "Colombo"
+                );
+
+        when(request.getParameter(
+                "contactNumber"))
+                .thenReturn(
+                        "0771234567"
+                );
+
+        when(request.getParameter(
+                "email"))
+                .thenReturn(
+                        "invalid-email"
+                );
+
+        patientServlet.doPost(
+                request,
+                response
+        );
+
+        verify(request)
+                .setAttribute(
+                        "errorMessage",
+                        "Enter a valid email address."
+                );
+
+        verify(request)
+                .getRequestDispatcher(
+                        "registerPatient.jsp"
+                );
+
+        verify(patientService, never())
+                .registerPatient(
+                        any(Patient.class)
                 );
     }
 
@@ -240,7 +367,7 @@ class PatientServletTest {
         verify(request)
                 .setAttribute(
                         "errorMessage",
-                        "All patient fields are required."
+                        "All required patient fields must be completed."
                 );
 
         verify(request)
@@ -274,6 +401,12 @@ class PatientServletTest {
                 "contactNumber"))
                 .thenReturn(
                         "0771234567"
+                );
+
+        when(request.getParameter(
+                "email"))
+                .thenReturn(
+                        "kyle@example.com"
                 );
 
         when(patientService
@@ -409,12 +542,6 @@ class PatientServletTest {
         verify(request)
                 .getRequestDispatcher(
                         "searchPatient.jsp"
-                );
-
-        verify(dispatcher)
-                .forward(
-                        request,
-                        response
                 );
     }
 
@@ -615,7 +742,8 @@ class PatientServletTest {
                 patientId,
                 patientName,
                 "Colombo",
-                contactNumber
+                contactNumber,
+                "patient@example.com"
         );
     }
 }

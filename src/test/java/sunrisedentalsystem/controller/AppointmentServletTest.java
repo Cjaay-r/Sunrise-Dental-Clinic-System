@@ -34,10 +34,18 @@ import sunrisedentalsystem.model.Patient;
 import sunrisedentalsystem.model.Treatment;
 import sunrisedentalsystem.model.User;
 import sunrisedentalsystem.service.AppointmentService;
+import sunrisedentalsystem.service.DentistService;
+import sunrisedentalsystem.service.EmailService;
+import sunrisedentalsystem.service.PatientService;
+import sunrisedentalsystem.service.TreatmentService;
 
 class AppointmentServletTest {
 
     private AppointmentService appointmentService;
+    private PatientService patientService;
+    private DentistService dentistService;
+    private TreatmentService treatmentService;
+    private EmailService emailService;
     private HttpServletRequest request;
     private HttpServletResponse response;
     private HttpSession session;
@@ -46,10 +54,23 @@ class AppointmentServletTest {
     private AppointmentServlet appointmentServlet;
 
     @BeforeEach
-    void setUp() {
+    void setUp()
+            throws Exception {
 
         appointmentService =
                 mock(AppointmentService.class);
+
+        patientService =
+                mock(PatientService.class);
+
+        dentistService =
+                mock(DentistService.class);
+
+        treatmentService =
+                mock(TreatmentService.class);
+
+        emailService =
+                mock(EmailService.class);
 
         request =
                 mock(HttpServletRequest.class);
@@ -69,21 +90,51 @@ class AppointmentServletTest {
         when(request.getSession(false))
                 .thenReturn(session);
 
-        when(session.getAttribute("loggedInUser"))
+        when(session.getAttribute(
+                "loggedInUser"))
                 .thenReturn(loggedInUser);
 
-        when(session.getAttribute("role"))
+        when(session.getAttribute(
+                "role"))
                 .thenReturn("STAFF");
 
         when(loggedInUser.getUserId())
                 .thenReturn(2);
 
-        when(request.getRequestDispatcher(anyString()))
+        when(request.getRequestDispatcher(
+                anyString()))
                 .thenReturn(dispatcher);
+
+        when(patientService
+                .searchPatient(5))
+                .thenReturn(
+                        new Patient(
+                                5,
+                                "Test Patient",
+                                "Colombo",
+                                "0771234567"
+                        )
+                );
+
+        when(dentistService
+                .getAllDentists())
+                .thenReturn(
+                        List.of()
+                );
+
+        when(treatmentService
+                .getAllTreatments())
+                .thenReturn(
+                        List.of()
+                );
 
         appointmentServlet =
                 new AppointmentServlet(
-                        appointmentService
+                        appointmentService,
+                        patientService,
+                        dentistService,
+                        treatmentService,
+                        emailService
                 );
     }
 
@@ -91,7 +142,8 @@ class AppointmentServletTest {
     void shouldOpenRegisterAppointmentPage()
             throws Exception {
 
-        when(request.getParameter("action"))
+        when(request.getParameter(
+                "action"))
                 .thenReturn("register");
 
         appointmentServlet.doGet(
@@ -131,39 +183,48 @@ class AppointmentServletTest {
                         )
                 );
 
-        when(request.getParameter("appointmentNo"))
+        when(request.getParameter(
+                "appointmentNo"))
                 .thenReturn(null);
 
-        when(request.getParameter("status"))
+        when(request.getParameter(
+                "status"))
                 .thenReturn(null);
 
-        when(appointmentService.getAllAppointments())
-                .thenReturn(appointments);
+        when(appointmentService
+                .getAllAppointments())
+                .thenReturn(
+                        appointments
+                );
 
         appointmentServlet.doGet(
                 request,
                 response
         );
 
-        verify(request).setAttribute(
-                "scheduledCount",
-                2
-        );
+        verify(request)
+                .setAttribute(
+                        "scheduledCount",
+                        2
+                );
 
-        verify(request).setAttribute(
-                "cancelledCount",
-                1
-        );
+        verify(request)
+                .setAttribute(
+                        "cancelledCount",
+                        1
+                );
 
-        verify(request).setAttribute(
-                "selectedStatus",
-                "ALL"
-        );
+        verify(request)
+                .setAttribute(
+                        "selectedStatus",
+                        "ALL"
+                );
 
-        verify(request).setAttribute(
-                "appointments",
-                appointments
-        );
+        verify(request)
+                .setAttribute(
+                        "appointments",
+                        appointments
+                );
 
         verify(request)
                 .getRequestDispatcher(
@@ -199,13 +260,18 @@ class AppointmentServletTest {
                         AppointmentStatus.SCHEDULED
                 );
 
-        when(request.getParameter("appointmentNo"))
+        when(request.getParameter(
+                "appointmentNo"))
                 .thenReturn(null);
 
-        when(request.getParameter("status"))
-                .thenReturn("SCHEDULED");
+        when(request.getParameter(
+                "status"))
+                .thenReturn(
+                        "SCHEDULED"
+                );
 
-        when(appointmentService.getAllAppointments())
+        when(appointmentService
+                .getAllAppointments())
                 .thenReturn(
                         List.of(
                                 scheduledOne,
@@ -219,28 +285,32 @@ class AppointmentServletTest {
                 response
         );
 
-        verify(request).setAttribute(
-                "scheduledCount",
-                2
-        );
+        verify(request)
+                .setAttribute(
+                        "scheduledCount",
+                        2
+                );
 
-        verify(request).setAttribute(
-                "cancelledCount",
-                1
-        );
+        verify(request)
+                .setAttribute(
+                        "cancelledCount",
+                        1
+                );
 
-        verify(request).setAttribute(
-                "selectedStatus",
-                "SCHEDULED"
-        );
+        verify(request)
+                .setAttribute(
+                        "selectedStatus",
+                        "SCHEDULED"
+                );
 
-        verify(request).setAttribute(
-                "appointments",
-                List.of(
-                        scheduledOne,
-                        scheduledTwo
-                )
-        );
+        verify(request)
+                .setAttribute(
+                        "appointments",
+                        List.of(
+                                scheduledOne,
+                                scheduledTwo
+                        )
+                );
     }
 
     @Test
@@ -259,13 +329,18 @@ class AppointmentServletTest {
                         AppointmentStatus.CANCELLED
                 );
 
-        when(request.getParameter("appointmentNo"))
+        when(request.getParameter(
+                "appointmentNo"))
                 .thenReturn(null);
 
-        when(request.getParameter("status"))
-                .thenReturn("CANCELLED");
+        when(request.getParameter(
+                "status"))
+                .thenReturn(
+                        "CANCELLED"
+                );
 
-        when(appointmentService.getAllAppointments())
+        when(appointmentService
+                .getAllAppointments())
                 .thenReturn(
                         List.of(
                                 scheduled,
@@ -278,27 +353,31 @@ class AppointmentServletTest {
                 response
         );
 
-        verify(request).setAttribute(
-                "scheduledCount",
-                1
-        );
+        verify(request)
+                .setAttribute(
+                        "scheduledCount",
+                        1
+                );
 
-        verify(request).setAttribute(
-                "cancelledCount",
-                1
-        );
+        verify(request)
+                .setAttribute(
+                        "cancelledCount",
+                        1
+                );
 
-        verify(request).setAttribute(
-                "selectedStatus",
-                "CANCELLED"
-        );
+        verify(request)
+                .setAttribute(
+                        "selectedStatus",
+                        "CANCELLED"
+                );
 
-        verify(request).setAttribute(
-                "appointments",
-                List.of(
-                        cancelled
-                )
-        );
+        verify(request)
+                .setAttribute(
+                        "appointments",
+                        List.of(
+                                cancelled
+                        )
+                );
     }
 
     @Test
@@ -327,10 +406,12 @@ class AppointmentServletTest {
     void shouldRejectAdminWhenOpeningRegisterPage()
             throws Exception {
 
-        when(session.getAttribute("role"))
+        when(session.getAttribute(
+                "role"))
                 .thenReturn("ADMIN");
 
-        when(request.getParameter("action"))
+        when(request.getParameter(
+                "action"))
                 .thenReturn("register");
 
         appointmentServlet.doGet(
@@ -338,10 +419,11 @@ class AppointmentServletTest {
                 response
         );
 
-        verify(response).sendError(
-                HttpServletResponse.SC_FORBIDDEN,
-                "Staff access required."
-        );
+        verify(response)
+                .sendError(
+                        HttpServletResponse.SC_FORBIDDEN,
+                        "Staff access required."
+                );
 
         verifyNoInteractions(
                 appointmentService
@@ -352,22 +434,28 @@ class AppointmentServletTest {
     void shouldRejectRegistrationWhenRequiredFieldsAreEmpty()
             throws Exception {
 
-        when(request.getParameter("action"))
+        when(request.getParameter(
+                "action"))
                 .thenReturn("register");
 
-        when(request.getParameter("patientId"))
+        when(request.getParameter(
+                "patientId"))
                 .thenReturn("");
 
-        when(request.getParameter("dentistId"))
+        when(request.getParameter(
+                "dentistId"))
                 .thenReturn("");
 
-        when(request.getParameter("treatmentId"))
+        when(request.getParameter(
+                "treatmentId"))
                 .thenReturn("");
 
-        when(request.getParameter("appointmentDate"))
+        when(request.getParameter(
+                "appointmentDate"))
                 .thenReturn("");
 
-        when(request.getParameter("appointmentTime"))
+        when(request.getParameter(
+                "appointmentTime"))
                 .thenReturn("");
 
         appointmentServlet.doPost(
@@ -375,10 +463,11 @@ class AppointmentServletTest {
                 response
         );
 
-        verify(request).setAttribute(
-                "errorMessage",
-                "All appointment fields are required."
-        );
+        verify(request)
+                .setAttribute(
+                        "errorMessage",
+                        "All appointment fields are required."
+                );
 
         verify(request)
                 .getRequestDispatcher(
@@ -400,26 +489,32 @@ class AppointmentServletTest {
     void shouldRejectInvalidAppointmentDetails()
             throws Exception {
 
-        when(request.getParameter("action"))
+        when(request.getParameter(
+                "action"))
                 .thenReturn("register");
 
-        when(request.getParameter("patientId"))
+        when(request.getParameter(
+                "patientId"))
                 .thenReturn("invalid");
 
-        when(request.getParameter("dentistId"))
+        when(request.getParameter(
+                "dentistId"))
                 .thenReturn("2");
 
-        when(request.getParameter("treatmentId"))
+        when(request.getParameter(
+                "treatmentId"))
                 .thenReturn("3");
 
-        when(request.getParameter("appointmentDate"))
+        when(request.getParameter(
+                "appointmentDate"))
                 .thenReturn(
                         LocalDate.now()
                                 .plusDays(5)
                                 .toString()
                 );
 
-        when(request.getParameter("appointmentTime"))
+        when(request.getParameter(
+                "appointmentTime"))
                 .thenReturn("10:30");
 
         appointmentServlet.doPost(
@@ -427,10 +522,11 @@ class AppointmentServletTest {
                 response
         );
 
-        verify(request).setAttribute(
-                "errorMessage",
-                "Invalid appointment details."
-        );
+        verify(request)
+                .setAttribute(
+                        "errorMessage",
+                        "Invalid appointment details."
+                );
 
         verify(request)
                 .getRequestDispatcher(
@@ -454,7 +550,10 @@ class AppointmentServletTest {
 
         stubRegistrationParameters(
                 pastDate,
-                LocalTime.of(10, 30)
+                LocalTime.of(
+                        10,
+                        30
+                )
         );
 
         appointmentServlet.doPost(
@@ -462,10 +561,11 @@ class AppointmentServletTest {
                 response
         );
 
-        verify(request).setAttribute(
-                "errorMessage",
-                "Appointment date cannot be in the past."
-        );
+        verify(request)
+                .setAttribute(
+                        "errorMessage",
+                        "Appointment date cannot be in the past."
+                );
 
         verify(appointmentService, never())
                 .checkAvailability(
@@ -484,7 +584,10 @@ class AppointmentServletTest {
                         .plusDays(5);
 
         LocalTime time =
-                LocalTime.of(10, 30);
+                LocalTime.of(
+                        10,
+                        30
+                );
 
         stubRegistrationParameters(
                 date,
@@ -504,10 +607,11 @@ class AppointmentServletTest {
                 response
         );
 
-        verify(request).setAttribute(
-                "errorMessage",
-                "Selected appointment slot is unavailable."
-        );
+        verify(request)
+                .setAttribute(
+                        "errorMessage",
+                        "Selected appointment slot is unavailable."
+                );
 
         verify(appointmentService, never())
                 .registerAppointment(
@@ -525,7 +629,10 @@ class AppointmentServletTest {
                         .plusDays(5);
 
         LocalTime time =
-                LocalTime.of(10, 30);
+                LocalTime.of(
+                        10,
+                        30
+                );
 
         stubRegistrationParameters(
                 date,
@@ -545,17 +652,21 @@ class AppointmentServletTest {
                         any(Appointment.class),
                         eq(2)
                 ))
-                .thenAnswer(invocation -> {
+                .thenAnswer(
+                        invocation -> {
 
-                    Appointment appointment =
-                            invocation.getArgument(0);
+                            Appointment appointment =
+                                    invocation.getArgument(
+                                            0
+                                    );
 
-                    appointment.setAppointmentNo(
-                            "1"
-                    );
+                            appointment.setAppointmentNo(
+                                    "1"
+                            );
 
-                    return appointment;
-                });
+                            return appointment;
+                        }
+                );
 
         Appointment databaseAppointment =
                 createAppointment(
@@ -564,7 +675,9 @@ class AppointmentServletTest {
                 );
 
         when(appointmentService
-                .searchAppointment("1"))
+                .searchAppointment(
+                        "1"
+                ))
                 .thenReturn(
                         databaseAppointment
                 );
@@ -629,19 +742,261 @@ class AppointmentServletTest {
                         .getTreatmentId()
         );
 
-        verify(request).setAttribute(
-                "appointment",
-                databaseAppointment
-        );
+        verify(request)
+                .setAttribute(
+                        "appointment",
+                        databaseAppointment
+                );
 
-        verify(request).setAttribute(
-                "successMessage",
-                "Appointment registered successfully."
-        );
+        verify(request)
+                .setAttribute(
+                        "successMessage",
+                        "Appointment registered successfully."
+                );
+
+        verify(emailService, never())
+                .sendAppointmentConfirmation(
+                        any(Appointment.class)
+                );
 
         verify(request)
                 .getRequestDispatcher(
                         "appointmentDetails.jsp"
+                );
+
+        verify(dispatcher)
+                .forward(
+                        request,
+                        response
+                );
+    }
+
+    @Test
+    void shouldSendConfirmationEmailAfterAppointmentRegistration()
+            throws Exception {
+
+        LocalDate date =
+                LocalDate.now()
+                        .plusDays(5);
+
+        LocalTime time =
+                LocalTime.of(
+                        10,
+                        30
+                );
+
+        Patient patientWithEmail =
+                new Patient(
+                        5,
+                        "Test Patient",
+                        "Colombo",
+                        "0771234567",
+                        "patient@example.com"
+                );
+
+        when(patientService
+                .searchPatient(5))
+                .thenReturn(
+                        patientWithEmail
+                );
+
+        stubRegistrationParameters(
+                date,
+                time
+        );
+
+        when(appointmentService
+                .checkAvailability(
+                        2,
+                        date,
+                        time
+                ))
+                .thenReturn(true);
+
+        when(appointmentService
+                .registerAppointment(
+                        any(Appointment.class),
+                        eq(2)
+                ))
+                .thenAnswer(
+                        invocation -> {
+
+                            Appointment appointment =
+                                    invocation.getArgument(
+                                            0
+                                    );
+
+                            appointment.setAppointmentNo(
+                                    "1"
+                            );
+
+                            return appointment;
+                        }
+                );
+
+        Appointment databaseAppointment =
+                createAppointment(
+                        "1",
+                        AppointmentStatus.SCHEDULED
+                );
+
+        when(appointmentService
+                .searchAppointment("1"))
+                .thenReturn(
+                        databaseAppointment
+                );
+
+        when(emailService
+                .sendAppointmentConfirmation(
+                        databaseAppointment
+                ))
+                .thenReturn(true);
+
+        appointmentServlet.doPost(
+                request,
+                response
+        );
+
+        verify(emailService)
+                .sendAppointmentConfirmation(
+                        databaseAppointment
+                );
+
+        assertEquals(
+                "patient@example.com",
+                databaseAppointment
+                        .getPatient()
+                        .getEmail()
+        );
+
+        verify(request)
+                .setAttribute(
+                        "successMessage",
+                        "Appointment registered successfully. Confirmation email sent."
+                );
+
+        verify(request)
+                .setAttribute(
+                        "appointment",
+                        databaseAppointment
+                );
+
+        verify(dispatcher)
+                .forward(
+                        request,
+                        response
+                );
+    }
+
+    @Test
+    void shouldStillRegisterAppointmentWhenConfirmationEmailFails()
+            throws Exception {
+
+        LocalDate date =
+                LocalDate.now()
+                        .plusDays(5);
+
+        LocalTime time =
+                LocalTime.of(
+                        10,
+                        30
+                );
+
+        Patient patientWithEmail =
+                new Patient(
+                        5,
+                        "Test Patient",
+                        "Colombo",
+                        "0771234567",
+                        "patient@example.com"
+                );
+
+        when(patientService
+                .searchPatient(5))
+                .thenReturn(
+                        patientWithEmail
+                );
+
+        stubRegistrationParameters(
+                date,
+                time
+        );
+
+        when(appointmentService
+                .checkAvailability(
+                        2,
+                        date,
+                        time
+                ))
+                .thenReturn(true);
+
+        when(appointmentService
+                .registerAppointment(
+                        any(Appointment.class),
+                        eq(2)
+                ))
+                .thenAnswer(
+                        invocation -> {
+
+                            Appointment appointment =
+                                    invocation.getArgument(
+                                            0
+                                    );
+
+                            appointment.setAppointmentNo(
+                                    "1"
+                            );
+
+                            return appointment;
+                        }
+                );
+
+        Appointment databaseAppointment =
+                createAppointment(
+                        "1",
+                        AppointmentStatus.SCHEDULED
+                );
+
+        when(appointmentService
+                .searchAppointment(
+                        "1"
+                ))
+                .thenReturn(
+                        databaseAppointment
+                );
+
+        when(emailService
+                .sendAppointmentConfirmation(
+                        databaseAppointment
+                ))
+                .thenReturn(false);
+
+        appointmentServlet.doPost(
+                request,
+                response
+        );
+
+        verify(appointmentService)
+                .registerAppointment(
+                        any(Appointment.class),
+                        eq(2)
+                );
+
+        verify(emailService)
+                .sendAppointmentConfirmation(
+                        databaseAppointment
+                );
+
+        verify(request)
+                .setAttribute(
+                        "successMessage",
+                        "Appointment registered successfully. Confirmation email could not be sent."
+                );
+
+        verify(request)
+                .setAttribute(
+                        "appointment",
+                        databaseAppointment
                 );
 
         verify(dispatcher)
@@ -661,11 +1016,14 @@ class AppointmentServletTest {
                         AppointmentStatus.SCHEDULED
                 );
 
-        when(request.getParameter("appointmentNo"))
+        when(request.getParameter(
+                "appointmentNo"))
                 .thenReturn("1");
 
         when(appointmentService
-                .searchAppointment("1"))
+                .searchAppointment(
+                        "1"
+                ))
                 .thenReturn(
                         appointment
                 );
@@ -680,10 +1038,11 @@ class AppointmentServletTest {
                         "1"
                 );
 
-        verify(request).setAttribute(
-                "appointment",
-                appointment
-        );
+        verify(request)
+                .setAttribute(
+                        "appointment",
+                        appointment
+                );
 
         verify(request)
                 .getRequestDispatcher(
@@ -701,26 +1060,34 @@ class AppointmentServletTest {
     void shouldShowErrorWhenAppointmentDoesNotExist()
             throws Exception {
 
-        when(request.getParameter("appointmentNo"))
-                .thenReturn("999");
+        when(request.getParameter(
+                "appointmentNo"))
+                .thenReturn(
+                        "999"
+                );
 
         when(appointmentService
-                .searchAppointment("999"))
+                .searchAppointment(
+                        "999"
+                ))
                 .thenReturn(null);
 
         when(appointmentService
                 .getAllAppointments())
-                .thenReturn(List.of());
+                .thenReturn(
+                        List.of()
+                );
 
         appointmentServlet.doGet(
                 request,
                 response
         );
 
-        verify(request).setAttribute(
-                "errorMessage",
-                "Appointment not found."
-        );
+        verify(request)
+                .setAttribute(
+                        "errorMessage",
+                        "Appointment not found."
+                );
 
         verify(request)
                 .getRequestDispatcher(
@@ -738,22 +1105,28 @@ class AppointmentServletTest {
     void shouldRejectInvalidAppointmentNumber()
             throws Exception {
 
-        when(request.getParameter("appointmentNo"))
-                .thenReturn("ABC");
+        when(request.getParameter(
+                "appointmentNo"))
+                .thenReturn(
+                        "ABC"
+                );
 
         when(appointmentService
                 .getAllAppointments())
-                .thenReturn(List.of());
+                .thenReturn(
+                        List.of()
+                );
 
         appointmentServlet.doGet(
                 request,
                 response
         );
 
-        verify(request).setAttribute(
-                "errorMessage",
-                "Invalid appointment number."
-        );
+        verify(request)
+                .setAttribute(
+                        "errorMessage",
+                        "Invalid appointment number."
+                );
 
         verify(request)
                 .getRequestDispatcher(
@@ -777,14 +1150,22 @@ class AppointmentServletTest {
                         AppointmentStatus.SCHEDULED
                 );
 
-        when(request.getParameter("action"))
-                .thenReturn("cancel");
+        when(request.getParameter(
+                "action"))
+                .thenReturn(
+                        "cancel"
+                );
 
-        when(request.getParameter("appointmentNo"))
-                .thenReturn("1");
+        when(request.getParameter(
+                "appointmentNo"))
+                .thenReturn(
+                        "1"
+                );
 
         when(appointmentService
-                .searchAppointment("1"))
+                .searchAppointment(
+                        "1"
+                ))
                 .thenReturn(
                         appointment
                 );
@@ -794,10 +1175,11 @@ class AppointmentServletTest {
                 response
         );
 
-        verify(request).setAttribute(
-                "appointment",
-                appointment
-        );
+        verify(request)
+                .setAttribute(
+                        "appointment",
+                        appointment
+                );
 
         verify(request)
                 .getRequestDispatcher(
@@ -827,21 +1209,31 @@ class AppointmentServletTest {
                         AppointmentStatus.CANCELLED
                 );
 
-        when(request.getParameter("action"))
-                .thenReturn("cancel");
+        when(request.getParameter(
+                "action"))
+                .thenReturn(
+                        "cancel"
+                );
 
-        when(request.getParameter("appointmentNo"))
-                .thenReturn("1");
+        when(request.getParameter(
+                "appointmentNo"))
+                .thenReturn(
+                        "1"
+                );
 
         when(appointmentService
-                .searchAppointment("1"))
+                .searchAppointment(
+                        "1"
+                ))
                 .thenReturn(
                         scheduledAppointment,
                         cancelledAppointment
                 );
 
         when(appointmentService
-                .cancelAppointment("1"))
+                .cancelAppointment(
+                        "1"
+                ))
                 .thenReturn(true);
 
         appointmentServlet.doPost(
@@ -859,19 +1251,192 @@ class AppointmentServletTest {
                         "1"
                 );
 
-        verify(request).setAttribute(
-                "appointment",
-                cancelledAppointment
-        );
+        verify(request)
+                .setAttribute(
+                        "appointment",
+                        cancelledAppointment
+                );
 
-        verify(request).setAttribute(
-                "successMessage",
-                "Appointment cancelled successfully."
-        );
+        verify(request)
+                .setAttribute(
+                        "successMessage",
+                        "Appointment cancelled successfully."
+                );
+
+        verify(emailService, never())
+                .sendAppointmentCancellation(
+                        any(Appointment.class)
+                );
 
         verify(request)
                 .getRequestDispatcher(
                         "appointmentDetails.jsp"
+                );
+
+        verify(dispatcher)
+                .forward(
+                        request,
+                        response
+                );
+    }
+
+    @Test
+    void shouldSendCancellationEmailAfterAppointmentCancellation()
+            throws Exception {
+
+        Appointment scheduledAppointment =
+                createAppointmentWithEmail(
+                        "1",
+                        AppointmentStatus.SCHEDULED
+                );
+
+        Appointment cancelledAppointment =
+                createAppointmentWithEmail(
+                        "1",
+                        AppointmentStatus.CANCELLED
+                );
+
+        when(request.getParameter(
+                "action"))
+                .thenReturn(
+                        "cancel"
+                );
+
+        when(request.getParameter(
+                "appointmentNo"))
+                .thenReturn(
+                        "1"
+                );
+
+        when(appointmentService
+                .searchAppointment(
+                        "1"
+                ))
+                .thenReturn(
+                        scheduledAppointment,
+                        cancelledAppointment
+                );
+
+        when(appointmentService
+                .cancelAppointment(
+                        "1"
+                ))
+                .thenReturn(true);
+
+        when(emailService
+                .sendAppointmentCancellation(
+                        cancelledAppointment
+                ))
+                .thenReturn(true);
+
+        appointmentServlet.doPost(
+                request,
+                response
+        );
+
+        verify(appointmentService)
+                .cancelAppointment(
+                        "1"
+                );
+
+        verify(emailService)
+                .sendAppointmentCancellation(
+                        cancelledAppointment
+                );
+
+        verify(request)
+                .setAttribute(
+                        "successMessage",
+                        "Appointment cancelled successfully. Cancellation email sent."
+                );
+
+        verify(request)
+                .setAttribute(
+                        "appointment",
+                        cancelledAppointment
+                );
+
+        verify(dispatcher)
+                .forward(
+                        request,
+                        response
+                );
+    }
+
+    @Test
+    void shouldStillCancelAppointmentWhenCancellationEmailFails()
+            throws Exception {
+
+        Appointment scheduledAppointment =
+                createAppointmentWithEmail(
+                        "1",
+                        AppointmentStatus.SCHEDULED
+                );
+
+        Appointment cancelledAppointment =
+                createAppointmentWithEmail(
+                        "1",
+                        AppointmentStatus.CANCELLED
+                );
+
+        when(request.getParameter(
+                "action"))
+                .thenReturn(
+                        "cancel"
+                );
+
+        when(request.getParameter(
+                "appointmentNo"))
+                .thenReturn(
+                        "1"
+                );
+
+        when(appointmentService
+                .searchAppointment(
+                        "1"
+                ))
+                .thenReturn(
+                        scheduledAppointment,
+                        cancelledAppointment
+                );
+
+        when(appointmentService
+                .cancelAppointment(
+                        "1"
+                ))
+                .thenReturn(true);
+
+        when(emailService
+                .sendAppointmentCancellation(
+                        cancelledAppointment
+                ))
+                .thenReturn(false);
+
+        appointmentServlet.doPost(
+                request,
+                response
+        );
+
+        verify(appointmentService)
+                .cancelAppointment(
+                        "1"
+                );
+
+        verify(emailService)
+                .sendAppointmentCancellation(
+                        cancelledAppointment
+                );
+
+        verify(request)
+                .setAttribute(
+                        "successMessage",
+                        "Appointment cancelled successfully. Cancellation email could not be sent."
+                );
+
+        verify(request)
+                .setAttribute(
+                        "appointment",
+                        cancelledAppointment
                 );
 
         verify(dispatcher)
@@ -891,14 +1456,22 @@ class AppointmentServletTest {
                         AppointmentStatus.CANCELLED
                 );
 
-        when(request.getParameter("action"))
-                .thenReturn("cancel");
+        when(request.getParameter(
+                "action"))
+                .thenReturn(
+                        "cancel"
+                );
 
-        when(request.getParameter("appointmentNo"))
-                .thenReturn("1");
+        when(request.getParameter(
+                "appointmentNo"))
+                .thenReturn(
+                        "1"
+                );
 
         when(appointmentService
-                .searchAppointment("1"))
+                .searchAppointment(
+                        "1"
+                ))
                 .thenReturn(
                         appointment
                 );
@@ -908,19 +1481,26 @@ class AppointmentServletTest {
                 response
         );
 
-        verify(request).setAttribute(
-                "appointment",
-                appointment
-        );
+        verify(request)
+                .setAttribute(
+                        "appointment",
+                        appointment
+                );
 
-        verify(request).setAttribute(
-                "errorMessage",
-                "Appointment is already cancelled."
-        );
+        verify(request)
+                .setAttribute(
+                        "errorMessage",
+                        "Appointment is already cancelled."
+                );
 
         verify(appointmentService, never())
                 .cancelAppointment(
                         "1"
+                );
+
+        verify(emailService, never())
+                .sendAppointmentCancellation(
+                        any(Appointment.class)
                 );
     }
 
@@ -934,20 +1514,30 @@ class AppointmentServletTest {
                         AppointmentStatus.SCHEDULED
                 );
 
-        when(request.getParameter("action"))
-                .thenReturn("cancel");
+        when(request.getParameter(
+                "action"))
+                .thenReturn(
+                        "cancel"
+                );
 
-        when(request.getParameter("appointmentNo"))
-                .thenReturn("1");
+        when(request.getParameter(
+                "appointmentNo"))
+                .thenReturn(
+                        "1"
+                );
 
         when(appointmentService
-                .searchAppointment("1"))
+                .searchAppointment(
+                        "1"
+                ))
                 .thenReturn(
                         appointment
                 );
 
         when(appointmentService
-                .cancelAppointment("1"))
+                .cancelAppointment(
+                        "1"
+                ))
                 .thenReturn(false);
 
         appointmentServlet.doPost(
@@ -955,22 +1545,30 @@ class AppointmentServletTest {
                 response
         );
 
-        verify(request).setAttribute(
-                "appointment",
-                appointment
-        );
+        verify(request)
+                .setAttribute(
+                        "appointment",
+                        appointment
+                );
 
-        verify(request).setAttribute(
-                "errorMessage",
-                "Unable to cancel appointment."
-        );
+        verify(request)
+                .setAttribute(
+                        "errorMessage",
+                        "Unable to cancel appointment."
+                );
+
+        verify(emailService, never())
+                .sendAppointmentCancellation(
+                        any(Appointment.class)
+                );
     }
 
     @Test
     void shouldThrowServletExceptionWhenAppointmentServiceFails()
             throws Exception {
 
-        when(request.getParameter("appointmentNo"))
+        when(request.getParameter(
+                "appointmentNo"))
                 .thenReturn(null);
 
         when(appointmentService
@@ -985,10 +1583,11 @@ class AppointmentServletTest {
                 assertThrows(
                         ServletException.class,
                         () ->
-                                appointmentServlet.doGet(
-                                        request,
-                                        response
-                                )
+                                appointmentServlet
+                                        .doGet(
+                                                request,
+                                                response
+                                        )
                 );
 
         assertEquals(
@@ -1001,24 +1600,38 @@ class AppointmentServletTest {
             LocalDate date,
             LocalTime time) {
 
-        when(request.getParameter("action"))
-                .thenReturn("register");
+        when(request.getParameter(
+                "action"))
+                .thenReturn(
+                        "register"
+                );
 
-        when(request.getParameter("patientId"))
-                .thenReturn("5");
+        when(request.getParameter(
+                "patientId"))
+                .thenReturn(
+                        "5"
+                );
 
-        when(request.getParameter("dentistId"))
-                .thenReturn("2");
+        when(request.getParameter(
+                "dentistId"))
+                .thenReturn(
+                        "2"
+                );
 
-        when(request.getParameter("treatmentId"))
-                .thenReturn("3");
+        when(request.getParameter(
+                "treatmentId"))
+                .thenReturn(
+                        "3"
+                );
 
-        when(request.getParameter("appointmentDate"))
+        when(request.getParameter(
+                "appointmentDate"))
                 .thenReturn(
                         date.toString()
                 );
 
-        when(request.getParameter("appointmentTime"))
+        when(request.getParameter(
+                "appointmentTime"))
                 .thenReturn(
                         time.toString()
                 );
@@ -1034,6 +1647,47 @@ class AppointmentServletTest {
                         "Test Patient",
                         "Colombo",
                         "0771234567"
+                );
+
+        Dentist dentist =
+                new Dentist(
+                        2,
+                        "Dr. Test Dentist"
+                );
+
+        Treatment treatment =
+                new Treatment(
+                        3,
+                        "Dental Filling",
+                        8500.0
+                );
+
+        return new Appointment(
+                appointmentNo,
+                LocalDate.now()
+                        .plusDays(5),
+                LocalTime.of(
+                        10,
+                        30
+                ),
+                status,
+                patient,
+                dentist,
+                treatment
+        );
+    }
+
+    private Appointment createAppointmentWithEmail(
+            String appointmentNo,
+            AppointmentStatus status) {
+
+        Patient patient =
+                new Patient(
+                        5,
+                        "Test Patient",
+                        "Colombo",
+                        "0771234567",
+                        "patient@example.com"
                 );
 
         Dentist dentist =

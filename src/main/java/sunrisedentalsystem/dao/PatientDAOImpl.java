@@ -21,8 +21,8 @@ public class PatientDAOImpl
 
         String sql =
                 "INSERT INTO patient " +
-                "(patient_name, address, contact_number) " +
-                "VALUES (?, ?, ?)";
+                "(patient_name, address, contact_number, email) " +
+                "VALUES (?, ?, ?, ?)";
 
         try (Connection connection =
                      DatabaseConnection.getConnection();
@@ -46,6 +46,11 @@ public class PatientDAOImpl
             statement.setString(
                     3,
                     patient.getContactNumber()
+            );
+
+            statement.setString(
+                    4,
+                    patient.getEmail()
             );
 
             int rowsInserted =
@@ -78,7 +83,7 @@ public class PatientDAOImpl
 
         String sql =
                 "SELECT patient_id, patient_name, " +
-                "address, contact_number " +
+                "address, contact_number, email " +
                 "FROM patient " +
                 "WHERE patient_id = ?";
 
@@ -115,7 +120,7 @@ public class PatientDAOImpl
 
         String sql =
                 "SELECT patient_id, patient_name, " +
-                "address, contact_number " +
+                "address, contact_number, email " +
                 "FROM patient " +
                 "WHERE contact_number = ?";
 
@@ -152,7 +157,7 @@ public class PatientDAOImpl
 
         String sql =
                 "SELECT patient_id, patient_name, " +
-                "address, contact_number " +
+                "address, contact_number, email " +
                 "FROM patient " +
                 "WHERE LOWER(patient_name) LIKE LOWER(?) " +
                 "ORDER BY patient_name ASC " +
@@ -195,7 +200,7 @@ public class PatientDAOImpl
 
         String sql =
                 "SELECT patient_id, patient_name, " +
-                "address, contact_number " +
+                "address, contact_number, email " +
                 "FROM patient " +
                 "ORDER BY patient_name ASC";
 
@@ -240,6 +245,9 @@ public class PatientDAOImpl
                 ),
                 resultSet.getString(
                         "contact_number"
+                ),
+                resultSet.getString(
+                        "email"
                 )
         );
     }
