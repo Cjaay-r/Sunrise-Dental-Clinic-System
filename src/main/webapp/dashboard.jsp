@@ -127,6 +127,7 @@
 
             </a>
 
+
             <% if (isAdmin) { %>
 
                 <a
@@ -139,6 +140,15 @@
 
             <% } %>
 
+
+            <a
+                href="<%= request.getContextPath() %>/help.jsp"
+                class="nav-item">
+
+                Help
+
+            </a>
+
         </nav>
 
 
@@ -148,7 +158,7 @@
                 href="<%= request.getContextPath() %>/logout"
                 class="logout-link">
 
-                Logout
+                Exit System
 
             </a>
 
@@ -472,6 +482,38 @@
                 </a>
 
             <% } %>
+
+
+            <a
+                href="<%= request.getContextPath() %>/help.jsp"
+                class="dashboard-card">
+
+                <div class="card-number">
+
+                    <%= isAdmin
+                            ? "07"
+                            : "06" %>
+
+                </div>
+
+                <div class="card-content">
+
+                    <h3>
+                        Help
+                    </h3>
+
+                    <p>
+                        View step-by-step guidance
+                        for using the clinic system.
+                    </p>
+
+                </div>
+
+                <div class="card-arrow">
+                    →
+                </div>
+
+            </a>
 
         </section>
 
