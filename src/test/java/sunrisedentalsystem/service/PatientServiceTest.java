@@ -5,8 +5,8 @@ import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
+
+import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -17,15 +17,19 @@ import sunrisedentalsystem.model.Patient;
 class PatientServiceTest {
 
     private PatientDAO patientDAO;
+
     private PatientService patientService;
 
     @BeforeEach
     void setUp() {
 
-        patientDAO = mock(PatientDAO.class);
+        patientDAO =
+                mock(PatientDAO.class);
 
         patientService =
-                new PatientServiceImpl(patientDAO);
+                new PatientServiceImpl(
+                        patientDAO
+                );
     }
 
     @Test
@@ -35,76 +39,99 @@ class PatientServiceTest {
         Patient patient =
                 mock(Patient.class);
 
-        when(patientDAO.addPatient(patient))
+        when(patientDAO
+                .addPatient(
+                        patient
+                ))
                 .thenReturn(true);
 
         Patient result =
-                patientService.registerPatient(patient);
+                patientService
+                        .registerPatient(
+                                patient
+                        );
 
-        assertSame(patient, result);
+        assertSame(
+                patient,
+                result
+        );
 
         verify(patientDAO)
-                .addPatient(patient);
+                .addPatient(
+                        patient
+                );
     }
 
     @Test
-    void shouldReturnNullWhenPatientCannotBeRegistered()
+    void shouldReturnNullWhenPatientRegistrationFails()
             throws Exception {
 
         Patient patient =
                 mock(Patient.class);
 
-        when(patientDAO.addPatient(patient))
+        when(patientDAO
+                .addPatient(
+                        patient
+                ))
                 .thenReturn(false);
 
         Patient result =
-                patientService.registerPatient(patient);
+                patientService
+                        .registerPatient(
+                                patient
+                        );
 
-        assertNull(result);
-
-        verify(patientDAO)
-                .addPatient(patient);
+        assertNull(
+                result
+        );
     }
 
     @Test
     void shouldSearchPatientById()
             throws Exception {
 
-        int patientId = 1;
+        Patient expectedPatient =
+                mock(Patient.class);
+
+        when(patientDAO
+                .getPatientById(
+                        5
+                ))
+                .thenReturn(
+                        expectedPatient
+                );
+
+        Patient result =
+                patientService
+                        .searchPatient(
+                                5
+                        );
+
+        assertSame(
+                expectedPatient,
+                result
+        );
+
+        verify(patientDAO)
+                .getPatientById(
+                        5
+                );
+    }
+
+    @Test
+    void shouldSearchPatientByContactNumber()
+            throws Exception {
 
         Patient expectedPatient =
                 mock(Patient.class);
 
         when(patientDAO
-                .getPatientById(patientId))
-                .thenReturn(expectedPatient);
-
-        Patient result =
-                patientService
-                        .searchPatient(patientId);
-
-        assertSame(expectedPatient, result);
-
-        verify(patientDAO)
-                .getPatientById(patientId);
-    }
-    
-    @Test
-    void shouldSearchPatientByContactNumber()
-            throws Exception {
-
-        Patient patient = new Patient(
-                5,
-                "Nimal Perera",
-                "Kandy",
-                "0771234567"
-        );
-
-        when(
-            patientDAO.getPatientByContactNumber(
-                    "0771234567"
-            )
-        ).thenReturn(patient);
+                .getPatientByContactNumber(
+                        "0771234567"
+                ))
+                .thenReturn(
+                        expectedPatient
+                );
 
         Patient result =
                 patientService
@@ -112,16 +139,78 @@ class PatientServiceTest {
                                 "0771234567"
                         );
 
-        assertNotNull(result);
-
-        assertEquals(
-                "0771234567",
-                result.getContactNumber()
+        assertSame(
+                expectedPatient,
+                result
         );
 
         verify(patientDAO)
                 .getPatientByContactNumber(
                         "0771234567"
                 );
+    }
+
+    @Test
+    void shouldSearchPatientsByName()
+            throws Exception {
+
+        List<Patient> expectedPatients =
+                List.of(
+                        mock(Patient.class),
+                        mock(Patient.class)
+                );
+
+        when(patientDAO
+                .searchPatientsByName(
+                        "Kyle"
+                ))
+                .thenReturn(
+                        expectedPatients
+                );
+
+        List<Patient> result =
+                patientService
+                        .searchPatientsByName(
+                                "Kyle"
+                        );
+
+        assertSame(
+                expectedPatients,
+                result
+        );
+
+        verify(patientDAO)
+                .searchPatientsByName(
+                        "Kyle"
+                );
+    }
+
+    @Test
+    void shouldGetAllPatients()
+            throws Exception {
+
+        List<Patient> expectedPatients =
+                List.of(
+                        mock(Patient.class),
+                        mock(Patient.class)
+                );
+
+        when(patientDAO
+                .getAllPatients())
+                .thenReturn(
+                        expectedPatients
+                );
+
+        List<Patient> result =
+                patientService
+                        .getAllPatients();
+
+        assertSame(
+                expectedPatients,
+                result
+        );
+
+        verify(patientDAO)
+                .getAllPatients();
     }
 }

@@ -2,24 +2,57 @@
     contentType="text/html; charset=UTF-8"
     pageEncoding="UTF-8"%>
 
+<%@ page import="java.util.List" %>
+<%@ page import="sunrisedentalsystem.model.Patient" %>
+
 <%
     if (session.getAttribute("loggedInUser") == null) {
         response.sendRedirect("login.jsp");
         return;
     }
 
+    String role =
+            (String) session.getAttribute(
+                    "role"
+            );
+
+    boolean isStaff =
+            "STAFF".equals(role);
+
     String errorMessage =
-            (String) request.getAttribute("errorMessage");
+            (String) request.getAttribute(
+                    "errorMessage"
+            );
+
+    List<Patient> patientResults =
+            (List<Patient>) request.getAttribute(
+                    "patientResults"
+            );
 
     String searchType =
             request.getParameter("searchType") != null
             ? request.getParameter("searchType")
-            : "id";
+            : "";
 
     String searchValue =
             request.getParameter("searchValue") != null
             ? request.getParameter("searchValue")
             : "";
+
+    String nameValue =
+            "name".equals(searchType)
+            ? searchValue
+            : "";
+
+    String phoneValue =
+            "phone".equals(searchType)
+            ? searchValue
+            : "";
+
+    boolean searchPerformed =
+            ("name".equals(searchType)
+            || "phone".equals(searchType))
+            && !searchValue.trim().isEmpty();
 %>
 
 <!DOCTYPE html>
@@ -37,8 +70,14 @@
         Patient Management - Sunrise Dental Clinic
     </title>
 
-    <link rel="stylesheet" href="css/style.css">
-    <link rel="stylesheet" href="css/management.css">
+    <link rel="stylesheet"
+          href="css/style.css">
+
+    <link rel="stylesheet"
+          href="css/management.css">
+
+    <link rel="stylesheet"
+          href="css/patient.css">
 
 </head>
 
@@ -59,8 +98,8 @@
             </h1>
 
             <p>
-                Search for an existing patient using
-                their patient ID or phone number.
+                Search for an existing patient
+                using their name or phone number.
             </p>
 
         </div>
@@ -75,138 +114,278 @@
     </div>
 
 
-    <div class="management-content">
+    <% if (errorMessage != null) { %>
 
-        <div class="action-panel">
+        <div class="form-message error patient-page-message">
 
-            <div class="panel-heading">
+            <%= errorMessage %>
 
-                <div class="panel-number">
-                    01
-                </div>
+        </div>
 
-                <div>
-
-                    <h2>
-                        Search Patient
-                    </h2>
-
-                    <p>
-                        Choose a search method and enter
-                        the patient's details.
-                    </p>
-
-                </div>
-
-            </div>
+    <% } %>
 
 
-            <% if (errorMessage != null) { %>
+    <div class="patient-search-layout">
 
-                <div class="form-message error">
-                    <%= errorMessage %>
-                </div>
+        <div class="patient-search-panel">
 
-            <% } %>
+            <h2>
+                Search Patient
+            </h2>
+
+            <p>
+                Find a patient by name or
+                registered phone number.
+            </p>
 
 
-            <form action="patient"
-                  method="get"
-                  class="management-form">
+            <div class="patient-search-methods">
 
-                <div class="form-group">
+                <form action="patient"
+                      method="get"
+                      class="management-form">
 
-                    <label for="searchType">
-                        Search By
-                    </label>
+                    <input type="hidden"
+                           name="searchType"
+                           value="name">
 
-                    <select id="searchType"
-                            name="searchType"
+                    <div class="form-group">
+
+                        <label for="patientNameSearch">
+                            Patient Name
+                        </label>
+
+                        <input
+                            type="text"
+                            id="patientNameSearch"
+                            name="searchValue"
+                            placeholder="Enter full or partial name"
+                            value="<%= nameValue %>"
                             required>
 
-                        <option value="id"
-                            <%= "id".equals(searchType)
-                                ? "selected" : "" %>>
+                    </div>
 
-                            Patient ID
+                    <button type="submit"
+                            class="primary-button">
 
-                        </option>
+                        Search by Name
 
-                        <option value="phone"
-                            <%= "phone".equals(searchType)
-                                ? "selected" : "" %>>
+                    </button>
 
+                </form>
+
+
+                <form action="patient"
+                      method="get"
+                      class="management-form">
+
+                    <input type="hidden"
+                           name="searchType"
+                           value="phone">
+
+                    <div class="form-group">
+
+                        <label for="patientPhoneSearch">
                             Phone Number
+                        </label>
 
-                        </option>
+                        <input
+                            type="text"
+                            id="patientPhoneSearch"
+                            name="searchValue"
+                            maxlength="10"
+                            pattern="[0-9]{1,10}"
+                            inputmode="numeric"
+                            placeholder="Enter phone number"
+                            value="<%= phoneValue %>"
+                            required>
 
-                    </select>
+                    </div>
 
-                </div>
+                    <button type="submit"
+                            class="primary-button">
 
+                        Search by Phone
 
-                <div class="form-group">
+                    </button>
 
-                    <label for="searchValue">
-                        Search Value
-                    </label>
+                </form>
 
-                    <input
-                        type="text"
-                        id="searchValue"
-                        name="searchValue"
-                        maxlength="10"
-                        pattern="[0-9]{1,10}"
-                        inputmode="numeric"
-                        placeholder="Enter patient ID or phone number"
-                        title="Enter numbers only, up to 10 digits"
-                        required>
-
-                </div>
-
-
-                <button type="submit"
-                        class="primary-button">
-
-                    Search Patient
-
-                </button>
-
-            </form>
+            </div>
 
         </div>
 
 
-        <div class="secondary-panel">
+        <div class="patient-register-panel">
 
-            <div class="panel-number">
-                02
-            </div>
+            <% if (isStaff) { %>
 
-            <h2>
-                New Patient?
-            </h2>
+                <h2>
+                    New Patient?
+                </h2>
 
-            <p>
-                Register a new patient and save their
-                contact information in the system.
-            </p>
+                <p>
+                    Register a new patient and
+                    save their information in the system.
+                </p>
 
-            <a href="registerPatient.jsp"
-               class="secondary-button">
+                <a href="registerPatient.jsp"
+                   class="secondary-button">
 
-                Register Patient
+                    Register Patient
 
-            </a>
+                </a>
+
+            <% } else { %>
+
+                <h2>
+                    Patient Records
+                </h2>
+
+                <p>
+                    Administrators can search and
+                    review registered patient information.
+                </p>
+
+            <% } %>
 
         </div>
 
     </div>
 
+
+    <% if (searchPerformed) { %>
+
+        <div class="patient-results-panel">
+
+            <div class="patient-results-header">
+
+                <div>
+
+                    <p class="page-label">
+                        SEARCH RESULTS
+                    </p>
+
+                    <h2>
+                        Matching Patients
+                    </h2>
+
+                </div>
+
+                <span class="patient-result-count">
+
+                    <%= patientResults != null
+                            ? patientResults.size()
+                            : 0 %>
+
+                    <%= patientResults != null
+                            && patientResults.size() == 1
+                            ? "Result"
+                            : "Results" %>
+
+                </span>
+
+            </div>
+
+
+            <% if (patientResults != null
+                    && !patientResults.isEmpty()) { %>
+
+                <div class="patient-table-wrapper">
+
+                    <table class="patient-table">
+
+                        <thead>
+
+                            <tr>
+
+                                <th>
+                                    Patient Name
+                                </th>
+
+                                <th>
+                                    Phone Number
+                                </th>
+
+                                <th>
+                                    Address
+                                </th>
+
+                                <th>
+                                    Action
+                                </th>
+
+                            </tr>
+
+                        </thead>
+
+                        <tbody>
+
+                        <% for (Patient patient
+                                : patientResults) { %>
+
+                            <tr>
+
+                                <td>
+
+                                    <strong>
+                                        <%= patient.getPatientName() %>
+                                    </strong>
+
+                                </td>
+
+                                <td>
+                                    <%= patient.getContactNumber() %>
+                                </td>
+
+                                <td>
+                                    <%= patient.getAddress() %>
+                                </td>
+
+                                <td>
+
+                                    <a
+                                        href="patient?patientId=<%= patient.getPatientId() %>"
+                                        class="patient-view-link">
+
+                                        View
+
+                                    </a>
+
+                                </td>
+
+                            </tr>
+
+                        <% } %>
+
+                        </tbody>
+
+                    </table>
+
+                </div>
+
+            <% } else { %>
+
+                <div class="patient-empty-state">
+
+                    <h3>
+                        No Patients Found
+                    </h3>
+
+                    <p>
+                        No patients matched the
+                        information you entered.
+                    </p>
+
+                </div>
+
+            <% } %>
+
+        </div>
+
+    <% } %>
+
 </div>
-
-
-<script src="js/patient-search.js"></script>
 
 </body>
 

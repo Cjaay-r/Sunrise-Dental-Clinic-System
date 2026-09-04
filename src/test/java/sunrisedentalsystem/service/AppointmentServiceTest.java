@@ -8,6 +8,7 @@ import static org.mockito.Mockito.when;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -18,15 +19,19 @@ import sunrisedentalsystem.model.Appointment;
 class AppointmentServiceTest {
 
     private AppointmentDAO appointmentDAO;
+
     private AppointmentService appointmentService;
 
     @BeforeEach
     void setUp() {
 
-        appointmentDAO = mock(AppointmentDAO.class);
+        appointmentDAO =
+                mock(AppointmentDAO.class);
 
         appointmentService =
-                new AppointmentServiceImpl(appointmentDAO);
+                new AppointmentServiceImpl(
+                        appointmentDAO
+                );
     }
 
     @Test
@@ -36,42 +41,89 @@ class AppointmentServiceTest {
         Appointment appointment =
                 mock(Appointment.class);
 
-        int staffId = 1;
+        int userId = 2;
 
         Appointment result =
-                appointmentService.registerAppointment(
-                        appointment,
-                        staffId);
+                appointmentService
+                        .registerAppointment(
+                                appointment,
+                                userId
+                        );
 
-        assertSame(appointment, result);
+        assertSame(
+                appointment,
+                result
+        );
 
         verify(appointmentDAO)
                 .addAppointment(
                         appointment,
-                        staffId);
+                        userId
+                );
     }
 
     @Test
     void shouldSearchAppointmentByAppointmentNumber()
             throws Exception {
 
-        String appointmentNo = "APT001";
+        String appointmentNo =
+                "1";
 
         Appointment expectedAppointment =
                 mock(Appointment.class);
 
         when(appointmentDAO
-                .getAppointmentByNumber(appointmentNo))
-                .thenReturn(expectedAppointment);
+                .getAppointmentByNumber(
+                        appointmentNo
+                ))
+                .thenReturn(
+                        expectedAppointment
+                );
 
         Appointment result =
                 appointmentService
-                        .searchAppointment(appointmentNo);
+                        .searchAppointment(
+                                appointmentNo
+                        );
 
-        assertSame(expectedAppointment, result);
+        assertSame(
+                expectedAppointment,
+                result
+        );
 
         verify(appointmentDAO)
-                .getAppointmentByNumber(appointmentNo);
+                .getAppointmentByNumber(
+                        appointmentNo
+                );
+    }
+
+    @Test
+    void shouldReturnAllAppointmentsFromDAO()
+            throws Exception {
+
+        List<Appointment> appointments =
+                List.of(
+                        mock(Appointment.class),
+                        mock(Appointment.class)
+                );
+
+        when(appointmentDAO
+                .getAllAppointments())
+                .thenReturn(
+                        appointments
+                );
+
+        List<Appointment> result =
+                appointmentService
+                        .getAllAppointments();
+
+        assertSame(
+                appointments,
+                result
+        );
+
+        verify(appointmentDAO)
+                .getAllAppointments();
     }
 
     @Test
@@ -81,30 +133,69 @@ class AppointmentServiceTest {
         int dentistId = 1;
 
         LocalDate appointmentDate =
-                LocalDate.of(2026, 8, 20);
+                LocalDate.now()
+                        .plusDays(5);
 
         LocalTime appointmentTime =
-                LocalTime.of(10, 30);
+                LocalTime.of(
+                        10,
+                        30
+                );
 
         when(appointmentDAO
                 .isAppointmentSlotAvailable(
                         dentistId,
                         appointmentDate,
-                        appointmentTime))
+                        appointmentTime
+                ))
                 .thenReturn(true);
 
         boolean result =
-                appointmentService.checkAvailability(
-                        dentistId,
-                        appointmentDate,
-                        appointmentTime);
+                appointmentService
+                        .checkAvailability(
+                                dentistId,
+                                appointmentDate,
+                                appointmentTime
+                        );
 
-        assertTrue(result);
+        assertTrue(
+                result
+        );
 
         verify(appointmentDAO)
                 .isAppointmentSlotAvailable(
                         dentistId,
                         appointmentDate,
-                        appointmentTime);
+                        appointmentTime
+                );
+    }
+
+    @Test
+    void shouldCancelAppointmentThroughDAO()
+            throws Exception {
+
+        String appointmentNo =
+                "1";
+
+        when(appointmentDAO
+                .cancelAppointment(
+                        appointmentNo
+                ))
+                .thenReturn(true);
+
+        boolean result =
+                appointmentService
+                        .cancelAppointment(
+                                appointmentNo
+                        );
+
+        assertTrue(
+                result
+        );
+
+        verify(appointmentDAO)
+                .cancelAppointment(
+                        appointmentNo
+                );
     }
 }

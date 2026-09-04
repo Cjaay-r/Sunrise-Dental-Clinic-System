@@ -8,20 +8,45 @@
         return;
     }
 
+    String role =
+            (String) session.getAttribute(
+                    "role"
+            );
+
+    if (!"STAFF".equals(role)) {
+
+        response.sendError(
+                403,
+                "Staff access required."
+        );
+
+        return;
+    }
+
     String errorMessage =
-            (String) request.getAttribute("errorMessage");
+            (String) request.getAttribute(
+                    "errorMessage"
+            );
 
     String patientName =
             request.getParameter("patientName") != null
-            ? request.getParameter("patientName") : "";
+            ? request.getParameter("patientName")
+            : "";
 
     String address =
             request.getParameter("address") != null
-            ? request.getParameter("address") : "";
+            ? request.getParameter("address")
+            : "";
 
     String contactNumber =
             request.getParameter("contactNumber") != null
-            ? request.getParameter("contactNumber") : "";
+            ? request.getParameter("contactNumber")
+            : "";
+
+    String email =
+            request.getParameter("email") != null
+            ? request.getParameter("email")
+            : "";
 %>
 
 <!DOCTYPE html>
@@ -39,8 +64,11 @@
         Register Patient - Sunrise Dental Clinic
     </title>
 
-    <link rel="stylesheet" href="css/style.css">
-    <link rel="stylesheet" href="css/management.css">
+    <link rel="stylesheet"
+          href="css/style.css">
+
+    <link rel="stylesheet"
+          href="css/management.css">
 
 </head>
 
@@ -61,16 +89,16 @@
             </h1>
 
             <p>
-                Enter the patient's basic information
+                Enter the patient's information
                 to create a new patient record.
             </p>
 
         </div>
 
-        <a href="dashboard.jsp"
+        <a href="patient"
            class="back-button">
 
-            Dashboard
+            Back to Patients
 
         </a>
 
@@ -82,7 +110,9 @@
         <% if (errorMessage != null) { %>
 
             <div class="form-message error">
+
                 <%= errorMessage %>
+
             </div>
 
         <% } %>
@@ -146,6 +176,24 @@
                     title="Enter a 10-digit contact number starting with 0"
                     autocomplete="tel"
                     required>
+
+            </div>
+
+
+            <div class="form-group">
+
+                <label for="email">
+                    Email Address
+                </label>
+
+                <input
+                    type="email"
+                    id="email"
+                    name="email"
+                    maxlength="150"
+                    placeholder="Optional email address"
+                    value="<%= email %>"
+                    autocomplete="email">
 
             </div>
 

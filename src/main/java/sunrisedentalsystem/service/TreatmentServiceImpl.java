@@ -14,7 +14,8 @@ public class TreatmentServiceImpl
     public TreatmentServiceImpl(
             TreatmentDAO treatmentDAO) {
 
-        this.treatmentDAO = treatmentDAO;
+        this.treatmentDAO =
+                treatmentDAO;
     }
 
     @Override
@@ -22,7 +23,9 @@ public class TreatmentServiceImpl
             Treatment treatment)
             throws SQLException {
 
-        treatmentDAO.addTreatment(treatment);
+        treatmentDAO.addTreatment(
+                treatment
+        );
 
         return true;
     }
@@ -33,7 +36,9 @@ public class TreatmentServiceImpl
             throws SQLException {
 
         return treatmentDAO
-                .getTreatmentById(treatmentId);
+                .getTreatmentById(
+                        treatmentId
+                );
     }
 
     @Override
@@ -42,5 +47,29 @@ public class TreatmentServiceImpl
 
         return treatmentDAO
                 .getAllTreatments();
+    }
+
+    @Override
+    public boolean updateTreatment(
+            Treatment treatment)
+            throws SQLException {
+
+        treatmentDAO.updateTreatment(
+                treatment
+        );
+
+        return true;
+    }
+
+    @Override
+    public boolean deleteTreatment(
+            int treatmentId)
+            throws SQLException {
+
+        treatmentDAO.deleteTreatment(
+                treatmentId
+        );
+
+        return true;
     }
 }

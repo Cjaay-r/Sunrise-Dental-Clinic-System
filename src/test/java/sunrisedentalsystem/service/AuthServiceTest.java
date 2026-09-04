@@ -11,6 +11,7 @@ import org.junit.jupiter.api.Test;
 
 import sunrisedentalsystem.dao.UserDAO;
 import sunrisedentalsystem.model.User;
+import sunrisedentalsystem.util.PasswordUtil;
 
 class AuthServiceTest {
 
@@ -20,80 +21,164 @@ class AuthServiceTest {
     @BeforeEach
     void setUp() {
 
-        userDAO = mock(UserDAO.class);
+        userDAO =
+                mock(UserDAO.class);
 
         authService =
-                new AuthServiceImpl(userDAO);
+                new AuthServiceImpl(
+                        userDAO
+                );
     }
 
     @Test
     void shouldAuthenticateUserWithCorrectCredentials()
             throws Exception {
 
-        String username = "admin";
-        String password = "admin123";
+        String username =
+                "admin";
 
-        User user = mock(User.class);
+        String password =
+                "admin123";
 
-        when(userDAO.getUserByUsername(username))
-                .thenReturn(user);
+        String passwordHash =
+                PasswordUtil.hashPassword(
+                        password
+                );
+
+        User user =
+                mock(User.class);
+
+        when(userDAO
+                .getUserByUsername(
+                        username
+                ))
+                .thenReturn(
+                        user
+                );
 
         when(user.getPassword())
-                .thenReturn(password);
+                .thenReturn(
+                        passwordHash
+                );
 
         User result =
                 authService.authenticate(
                         username,
-                        password);
+                        password
+                );
 
-        assertSame(user, result);
+        assertSame(
+                user,
+                result
+        );
 
         verify(userDAO)
-                .getUserByUsername(username);
+                .getUserByUsername(
+                        username
+                );
     }
 
     @Test
     void shouldRejectUserWithIncorrectPassword()
             throws Exception {
 
-        String username = "admin";
+        String username =
+                "admin";
 
-        User user = mock(User.class);
+        String passwordHash =
+                PasswordUtil.hashPassword(
+                        "correctPassword"
+                );
 
-        when(userDAO.getUserByUsername(username))
-                .thenReturn(user);
+        User user =
+                mock(User.class);
+
+        when(userDAO
+                .getUserByUsername(
+                        username
+                ))
+                .thenReturn(
+                        user
+                );
 
         when(user.getPassword())
-                .thenReturn("correctPassword");
+                .thenReturn(
+                        passwordHash
+                );
 
         User result =
                 authService.authenticate(
                         username,
-                        "wrongPassword");
+                        "wrongPassword"
+                );
 
-        assertNull(result);
+        assertNull(
+                result
+        );
 
         verify(userDAO)
-                .getUserByUsername(username);
+                .getUserByUsername(
+                        username
+                );
     }
 
     @Test
     void shouldRejectUnknownUsername()
             throws Exception {
 
-        String username = "unknown";
+        String username =
+                "unknown";
 
-        when(userDAO.getUserByUsername(username))
+        when(userDAO
+                .getUserByUsername(
+                        username
+                ))
                 .thenReturn(null);
 
         User result =
                 authService.authenticate(
                         username,
-                        "password123");
+                        "password123"
+                );
 
-        assertNull(result);
+        assertNull(
+                result
+        );
 
         verify(userDAO)
-                .getUserByUsername(username);
+                .getUserByUsername(
+                        username
+                );
+    }
+
+    @Test
+    void shouldRejectInvalidStoredPasswordHash()
+            throws Exception {
+
+        User user =
+                mock(User.class);
+
+        when(userDAO
+                .getUserByUsername(
+                        "admin"
+                ))
+                .thenReturn(
+                        user
+                );
+
+        when(user.getPassword())
+                .thenReturn(
+                        "not-a-valid-bcrypt-hash"
+                );
+
+        User result =
+                authService.authenticate(
+                        "admin",
+                        "admin123"
+                );
+
+        assertNull(
+                result
+        );
     }
 }

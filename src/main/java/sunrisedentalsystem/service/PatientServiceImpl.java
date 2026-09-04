@@ -1,6 +1,7 @@
 package sunrisedentalsystem.service;
 
 import java.sql.SQLException;
+import java.util.List;
 
 import sunrisedentalsystem.dao.PatientDAO;
 import sunrisedentalsystem.model.Patient;
@@ -13,7 +14,8 @@ public class PatientServiceImpl
     public PatientServiceImpl(
             PatientDAO patientDAO) {
 
-        this.patientDAO = patientDAO;
+        this.patientDAO =
+                patientDAO;
     }
 
     @Override
@@ -22,9 +24,12 @@ public class PatientServiceImpl
             throws SQLException {
 
         boolean added =
-                patientDAO.addPatient(patient);
+                patientDAO.addPatient(
+                        patient
+                );
 
         if (added) {
+
             return patient;
         }
 
@@ -37,9 +42,11 @@ public class PatientServiceImpl
             throws SQLException {
 
         return patientDAO
-                .getPatientById(patientId);
+                .getPatientById(
+                        patientId
+                );
     }
-    
+
     @Override
     public Patient searchPatientByContactNumber(
             String contactNumber)
@@ -49,5 +56,24 @@ public class PatientServiceImpl
                 .getPatientByContactNumber(
                         contactNumber
                 );
+    }
+
+    @Override
+    public List<Patient> searchPatientsByName(
+            String patientName)
+            throws SQLException {
+
+        return patientDAO
+                .searchPatientsByName(
+                        patientName
+                );
+    }
+
+    @Override
+    public List<Patient> getAllPatients()
+            throws SQLException {
+
+        return patientDAO
+                .getAllPatients();
     }
 }

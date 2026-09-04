@@ -11,15 +11,25 @@
     }
 
     Patient patient =
-            (Patient) request.getAttribute("patient");
+            (Patient) request.getAttribute(
+                    "patient"
+            );
 
     String successMessage =
-            (String) request.getAttribute("successMessage");
+            (String) request.getAttribute(
+                    "successMessage"
+            );
 
     if (patient == null) {
         response.sendRedirect("patient");
         return;
     }
+
+    String patientEmail =
+            patient.getEmail() != null
+            && !patient.getEmail().trim().isEmpty()
+            ? patient.getEmail()
+            : "Not provided";
 %>
 
 <!DOCTYPE html>
@@ -37,8 +47,11 @@
         Patient Details - Sunrise Dental Clinic
     </title>
 
-    <link rel="stylesheet" href="css/style.css">
-    <link rel="stylesheet" href="css/management.css">
+    <link rel="stylesheet"
+          href="css/style.css">
+
+    <link rel="stylesheet"
+          href="css/management.css">
 
 </head>
 
@@ -64,10 +77,10 @@
 
         </div>
 
-        <a href="dashboard.jsp"
+        <a href="patient"
            class="back-button">
 
-            Dashboard
+            Back to Patients
 
         </a>
 
@@ -77,7 +90,9 @@
     <% if (successMessage != null) { %>
 
         <div class="form-message success">
+
             <%= successMessage %>
+
         </div>
 
     <% } %>
@@ -142,6 +157,19 @@
 
                 <strong>
                     <%= patient.getContactNumber() %>
+                </strong>
+
+            </div>
+
+
+            <div class="detail-item">
+
+                <span>
+                    Email Address
+                </span>
+
+                <strong>
+                    <%= patientEmail %>
                 </strong>
 
             </div>

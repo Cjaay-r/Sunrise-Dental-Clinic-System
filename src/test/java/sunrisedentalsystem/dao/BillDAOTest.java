@@ -1,8 +1,13 @@
 package sunrisedentalsystem.dao;
 
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.mockStatic;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import java.sql.Connection;
 import java.sql.Date;
@@ -25,7 +30,9 @@ class BillDAOTest {
     private BillDAO billDAO;
 
     private Connection connection;
+
     private PreparedStatement preparedStatement;
+
     private ResultSet resultSet;
 
     private MockedStatic<DatabaseConnection>
@@ -34,47 +41,67 @@ class BillDAOTest {
     @BeforeEach
     void setUp() {
 
-        connection = mock(Connection.class);
+        connection =
+                mock(Connection.class);
 
         preparedStatement =
                 mock(PreparedStatement.class);
 
-        resultSet = mock(ResultSet.class);
+        resultSet =
+                mock(ResultSet.class);
 
         databaseConnectionMock =
-                mockStatic(DatabaseConnection.class);
+                mockStatic(
+                        DatabaseConnection.class
+                );
 
         databaseConnectionMock
-                .when(DatabaseConnection::getConnection)
-                .thenReturn(connection);
+                .when(
+                        DatabaseConnection::getConnection
+                )
+                .thenReturn(
+                        connection
+                );
 
-        billDAO = new BillDAOImpl();
+        billDAO =
+                new BillDAOImpl();
     }
 
     @AfterEach
     void tearDown() {
+
         databaseConnectionMock.close();
     }
 
     @Test
-    void shouldAddBill() throws Exception {
+    void shouldAddBill()
+            throws Exception {
 
-        Bill bill = new Bill(
-                0,
-                10,
-                2,
-                1000.00,
-                5000.00,
-                LocalDate.of(2026, 9, 1)
-        );
+        Bill bill =
+                new Bill(
+                        0,
+                        10,
+                        2,
+                        2500.00,
+                        5000.00,
+                        LocalDate.of(
+                                2026,
+                                9,
+                                2
+                        )
+                );
 
         when(connection.prepareStatement(
                 anyString(),
                 eq(Statement.RETURN_GENERATED_KEYS)))
-                .thenReturn(preparedStatement);
+                .thenReturn(
+                        preparedStatement
+                );
 
         when(preparedStatement.getGeneratedKeys())
-                .thenReturn(resultSet);
+                .thenReturn(
+                        resultSet
+                );
 
         when(resultSet.next())
                 .thenReturn(true);
@@ -82,24 +109,44 @@ class BillDAOTest {
         when(resultSet.getInt(1))
                 .thenReturn(7);
 
-        billDAO.addBill(bill);
+        billDAO.addBill(
+                bill
+        );
 
-        assertEquals(7, bill.getBillId());
-
-        verify(preparedStatement)
-                .setInt(1, 10);
-
-        verify(preparedStatement)
-                .setInt(2, 2);
-
-        verify(preparedStatement)
-                .setDouble(3, 1000.00);
+        assertEquals(
+                7,
+                bill.getBillId()
+        );
 
         verify(preparedStatement)
-                .setDouble(4, 5000.00);
+                .setInt(
+                        1,
+                        10
+                );
 
         verify(preparedStatement)
-                .setDouble(5, 6000.00);
+                .setInt(
+                        2,
+                        2
+                );
+
+        verify(preparedStatement)
+                .setDouble(
+                        3,
+                        2500.00
+                );
+
+        verify(preparedStatement)
+                .setDouble(
+                        4,
+                        5000.00
+                );
+
+        verify(preparedStatement)
+                .setDouble(
+                        5,
+                        7500.00
+                );
 
         verify(preparedStatement)
                 .setDate(
@@ -108,7 +155,7 @@ class BillDAOTest {
                                 LocalDate.of(
                                         2026,
                                         9,
-                                        1
+                                        2
                                 )
                         )
                 );
@@ -118,24 +165,142 @@ class BillDAOTest {
     }
 
     @Test
-    void shouldGetBillById() throws Exception {
+    void shouldAddBillUsingLoggedInUser()
+            throws Exception {
+
+        Bill bill =
+                new Bill(
+                        0,
+                        10,
+                        0,
+                        2500.00,
+                        5000.00,
+                        LocalDate.of(
+                                2026,
+                                9,
+                                2
+                        )
+                );
+
+        when(connection.prepareStatement(
+                anyString(),
+                eq(Statement.RETURN_GENERATED_KEYS)))
+                .thenReturn(
+                        preparedStatement
+                );
+
+        when(preparedStatement.getGeneratedKeys())
+                .thenReturn(
+                        resultSet
+                );
+
+        when(resultSet.next())
+                .thenReturn(true);
+
+        when(resultSet.getInt(1))
+                .thenReturn(8);
+
+        billDAO.addBill(
+                bill,
+                2
+        );
+
+        assertEquals(
+                8,
+                bill.getBillId()
+        );
+
+        verify(preparedStatement)
+                .setInt(
+                        1,
+                        10
+                );
+
+        verify(preparedStatement)
+                .setInt(
+                        2,
+                        2
+                );
+
+        verify(preparedStatement)
+                .setDouble(
+                        3,
+                        2500.00
+                );
+
+        verify(preparedStatement)
+                .setDouble(
+                        4,
+                        5000.00
+                );
+
+        verify(preparedStatement)
+                .setDouble(
+                        5,
+                        7500.00
+                );
+
+        verify(preparedStatement)
+                .setDate(
+                        6,
+                        Date.valueOf(
+                                LocalDate.of(
+                                        2026,
+                                        9,
+                                        2
+                                )
+                        )
+                );
+
+        verify(preparedStatement)
+                .executeUpdate();
+    }
+
+    @Test
+    void shouldGetBillById()
+            throws Exception {
 
         prepareSingleBillResult();
 
         Bill bill =
-                billDAO.getBillById(5);
+                billDAO.getBillById(
+                        5
+                );
 
-        assertNotNull(bill);
-        assertEquals(5, bill.getBillId());
-        assertEquals(10, bill.getAppointmentNo());
+        assertNotNull(
+                bill
+        );
 
         assertEquals(
-                6000.00,
+                5,
+                bill.getBillId()
+        );
+
+        assertEquals(
+                10,
+                bill.getAppointmentNo()
+        );
+
+        assertEquals(
+                2500.00,
+                bill.getConsultationFee()
+        );
+
+        assertEquals(
+                5000.00,
+                bill.getTreatmentCost()
+        );
+
+        assertEquals(
+                7500.00,
                 bill.getTotalAmount()
         );
 
         verify(preparedStatement)
-                .setInt(1, 5);
+                .setInt(
+                        1,
+                        5
+                );
     }
 
     @Test
@@ -145,54 +310,91 @@ class BillDAOTest {
         prepareSingleBillResult();
 
         Bill bill =
-                billDAO.getBillByAppointmentNo(10);
+                billDAO
+                        .getBillByAppointmentNo(
+                                10
+                        );
 
-        assertNotNull(bill);
+        assertNotNull(
+                bill
+        );
 
         assertEquals(
                 10,
                 bill.getAppointmentNo()
         );
 
+        assertEquals(
+                7500.00,
+                bill.getTotalAmount()
+        );
+
         verify(preparedStatement)
-                .setInt(1, 10);
+                .setInt(
+                        1,
+                        10
+                );
     }
 
     @Test
     void shouldGetAllBills()
             throws Exception {
 
-        when(connection.prepareStatement(anyString()))
-                .thenReturn(preparedStatement);
+        when(connection.prepareStatement(
+                anyString()))
+                .thenReturn(
+                        preparedStatement
+                );
 
         when(preparedStatement.executeQuery())
-                .thenReturn(resultSet);
+                .thenReturn(
+                        resultSet
+                );
 
         when(resultSet.next())
-                .thenReturn(true, false);
+                .thenReturn(
+                        true,
+                        false
+                );
 
         stubBillColumns();
 
         List<Bill> bills =
                 billDAO.getAllBills();
 
-        assertNotNull(bills);
-        assertEquals(1, bills.size());
+        assertNotNull(
+                bills
+        );
+
+        assertEquals(
+                1,
+                bills.size()
+        );
 
         assertEquals(
                 5,
                 bills.get(0).getBillId()
+        );
+
+        assertEquals(
+                7500.00,
+                bills.get(0).getTotalAmount()
         );
     }
 
     private void prepareSingleBillResult()
             throws Exception {
 
-        when(connection.prepareStatement(anyString()))
-                .thenReturn(preparedStatement);
+        when(connection.prepareStatement(
+                anyString()))
+                .thenReturn(
+                        preparedStatement
+                );
 
         when(preparedStatement.executeQuery())
-                .thenReturn(resultSet);
+                .thenReturn(
+                        resultSet
+                );
 
         when(resultSet.next())
                 .thenReturn(true);
@@ -203,10 +405,12 @@ class BillDAOTest {
     private void stubBillColumns()
             throws Exception {
 
-        when(resultSet.getInt("bill_id"))
+        when(resultSet.getInt(
+                "bill_id"))
                 .thenReturn(5);
 
-        when(resultSet.getInt("appointment_no"))
+        when(resultSet.getInt(
+                "appointment_no"))
                 .thenReturn(10);
 
         when(resultSet.getInt(
@@ -215,20 +419,28 @@ class BillDAOTest {
 
         when(resultSet.getDouble(
                 "consultation_fee"))
-                .thenReturn(1000.00);
+                .thenReturn(
+                        2500.00
+                );
 
         when(resultSet.getDouble(
                 "treatment_cost"))
-                .thenReturn(5000.00);
+                .thenReturn(
+                        5000.00
+                );
 
         when(resultSet.getDouble(
                 "total_amount"))
-                .thenReturn(6000.00);
+                .thenReturn(
+                        7500.00
+                );
 
         when(resultSet.getDate(
                 "generated_date"))
                 .thenReturn(
-                        Date.valueOf("2026-09-01")
+                        Date.valueOf(
+                                "2026-09-02"
+                        )
                 );
     }
 }

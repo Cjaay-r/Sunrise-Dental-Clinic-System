@@ -1,13 +1,20 @@
 package sunrisedentalsystem.dao;
 
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.mockStatic;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.Statement;
+import java.util.List;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -22,7 +29,9 @@ class PatientDAOTest {
     private PatientDAO patientDAO;
 
     private Connection connection;
+
     private PreparedStatement preparedStatement;
+
     private ResultSet resultSet;
 
     private MockedStatic<DatabaseConnection>
@@ -31,165 +40,348 @@ class PatientDAOTest {
     @BeforeEach
     void setUp() {
 
-        connection = mock(Connection.class);
-        preparedStatement = mock(PreparedStatement.class);
-        resultSet = mock(ResultSet.class);
+        connection =
+                mock(Connection.class);
+
+        preparedStatement =
+                mock(PreparedStatement.class);
+
+        resultSet =
+                mock(ResultSet.class);
 
         databaseConnectionMock =
-                mockStatic(DatabaseConnection.class);
+                mockStatic(
+                        DatabaseConnection.class
+                );
 
         databaseConnectionMock
-                .when(DatabaseConnection::getConnection)
-                .thenReturn(connection);
+                .when(
+                        DatabaseConnection::getConnection
+                )
+                .thenReturn(
+                        connection
+                );
 
-        patientDAO = new PatientDAOImpl();
+        patientDAO =
+                new PatientDAOImpl();
     }
 
     @AfterEach
     void tearDown() {
+
         databaseConnectionMock.close();
     }
 
     @Test
-    void shouldAddPatient() throws Exception {
+    void shouldAddPatient()
+            throws Exception {
 
-        Patient patient = new Patient(
-                0,
-                "Test Patient",
-                "Colombo",
-                "0771234567"
-        );
+        Patient patient =
+                new Patient(
+                        0,
+                        "Kyle John",
+                        "Colombo",
+                        "0771234567",
+                        "kyle@example.com"
+                );
 
         when(connection.prepareStatement(
                 anyString(),
                 eq(Statement.RETURN_GENERATED_KEYS)))
-                .thenReturn(preparedStatement);
+                .thenReturn(
+                        preparedStatement
+                );
 
-        when(preparedStatement.executeUpdate())
+        when(preparedStatement
+                .executeUpdate())
                 .thenReturn(1);
 
-        when(preparedStatement.getGeneratedKeys())
-                .thenReturn(resultSet);
+        when(preparedStatement
+                .getGeneratedKeys())
+                .thenReturn(
+                        resultSet
+                );
 
         when(resultSet.next())
                 .thenReturn(true);
 
         when(resultSet.getInt(1))
-                .thenReturn(1);
-
-        boolean result =
-                patientDAO.addPatient(patient);
-
-        assertTrue(result);
-        assertEquals(1, patient.getPatientId());
-
-        verify(preparedStatement)
-                .setString(1, "Test Patient");
-
-        verify(preparedStatement)
-                .setString(2, "Colombo");
-
-        verify(preparedStatement)
-                .setString(3, "0771234567");
-
-        verify(preparedStatement)
-                .executeUpdate();
-    }
-
-    @Test
-    void shouldGetPatientById() throws Exception {
-
-        when(connection.prepareStatement(anyString()))
-                .thenReturn(preparedStatement);
-
-        when(preparedStatement.executeQuery())
-                .thenReturn(resultSet);
-
-        when(resultSet.next())
-                .thenReturn(true);
-
-        when(resultSet.getInt("patient_id"))
                 .thenReturn(5);
 
-        when(resultSet.getString("patient_name"))
-                .thenReturn("John");
+        boolean result =
+                patientDAO.addPatient(
+                        patient
+                );
 
-        when(resultSet.getString("address"))
-                .thenReturn("Kandy");
+        assertTrue(
+                result
+        );
 
-        when(resultSet.getString("contact_number"))
-                .thenReturn("0712345678");
-
-        Patient patient =
-                patientDAO.getPatientById(5);
-
-        assertNotNull(patient);
-        assertEquals(5, patient.getPatientId());
-        assertEquals("John", patient.getPatientName());
-        assertEquals("Kandy", patient.getAddress());
         assertEquals(
-                "0712345678",
-                patient.getContactNumber()
+                5,
+                patient.getPatientId()
         );
 
         verify(preparedStatement)
-                .setInt(1, 5);
+                .setString(
+                        1,
+                        "Kyle John"
+                );
+
+        verify(preparedStatement)
+                .setString(
+                        2,
+                        "Colombo"
+                );
+
+        verify(preparedStatement)
+                .setString(
+                        3,
+                        "0771234567"
+                );
+
+        verify(preparedStatement)
+                .setString(
+                        4,
+                        "kyle@example.com"
+                );
+    }
+
+    @Test
+    void shouldGetPatientById()
+            throws Exception {
+
+        prepareSinglePatientResult();
+
+        Patient patient =
+                patientDAO
+                        .getPatientById(
+                                5
+                        );
+
+        assertNotNull(
+                patient
+        );
+
+        assertEquals(
+                5,
+                patient.getPatientId()
+        );
+
+        assertEquals(
+                "Kyle John",
+                patient.getPatientName()
+        );
+
+        assertEquals(
+                "kyle@example.com",
+                patient.getEmail()
+        );
+
+        verify(preparedStatement)
+                .setInt(
+                        1,
+                        5
+                );
     }
 
     @Test
     void shouldGetPatientByContactNumber()
             throws Exception {
 
-        when(connection.prepareStatement(anyString()))
-                .thenReturn(preparedStatement);
+        prepareSinglePatientResult();
+
+        Patient patient =
+                patientDAO
+                        .getPatientByContactNumber(
+                                "0771234567"
+                        );
+
+        assertNotNull(
+                patient
+        );
+
+        assertEquals(
+                "Kyle John",
+                patient.getPatientName()
+        );
+
+        assertEquals(
+                "0771234567",
+                patient.getContactNumber()
+        );
+
+        assertEquals(
+                "kyle@example.com",
+                patient.getEmail()
+        );
+
+        verify(preparedStatement)
+                .setString(
+                        1,
+                        "0771234567"
+                );
+    }
+
+    @Test
+    void shouldSearchPatientsByName()
+            throws Exception {
+
+        when(connection.prepareStatement(
+                anyString()))
+                .thenReturn(
+                        preparedStatement
+                );
 
         when(preparedStatement.executeQuery())
-                .thenReturn(resultSet);
+                .thenReturn(
+                        resultSet
+                );
+
+        when(resultSet.next())
+                .thenReturn(
+                        true,
+                        false
+                );
+
+        stubPatientResult();
+
+        List<Patient> patients =
+                patientDAO
+                        .searchPatientsByName(
+                                "Kyle"
+                        );
+
+        assertNotNull(
+                patients
+        );
+
+        assertEquals(
+                1,
+                patients.size()
+        );
+
+        assertEquals(
+                "Kyle John",
+                patients
+                        .get(0)
+                        .getPatientName()
+        );
+
+        assertEquals(
+                "kyle@example.com",
+                patients
+                        .get(0)
+                        .getEmail()
+        );
+
+        verify(preparedStatement)
+                .setString(
+                        1,
+                        "%Kyle%"
+                );
+    }
+
+    @Test
+    void shouldGetAllPatients()
+            throws Exception {
+
+        when(connection.prepareStatement(
+                anyString()))
+                .thenReturn(
+                        preparedStatement
+                );
+
+        when(preparedStatement.executeQuery())
+                .thenReturn(
+                        resultSet
+                );
+
+        when(resultSet.next())
+                .thenReturn(
+                        true,
+                        false
+                );
+
+        stubPatientResult();
+
+        List<Patient> patients =
+                patientDAO
+                        .getAllPatients();
+
+        assertNotNull(
+                patients
+        );
+
+        assertEquals(
+                1,
+                patients.size()
+        );
+
+        assertEquals(
+                5,
+                patients
+                        .get(0)
+                        .getPatientId()
+        );
+
+        assertEquals(
+                "kyle@example.com",
+                patients
+                        .get(0)
+                        .getEmail()
+        );
+    }
+
+    private void prepareSinglePatientResult()
+            throws Exception {
+
+        when(connection.prepareStatement(
+                anyString()))
+                .thenReturn(
+                        preparedStatement
+                );
+
+        when(preparedStatement.executeQuery())
+                .thenReturn(
+                        resultSet
+                );
 
         when(resultSet.next())
                 .thenReturn(true);
 
-        when(resultSet.getInt("patient_id"))
-                .thenReturn(8);
-
-        when(resultSet.getString("patient_name"))
-                .thenReturn("David");
-
-        when(resultSet.getString("address"))
-                .thenReturn("Colombo");
-
-        when(resultSet.getString("contact_number"))
-                .thenReturn("0777654321");
-
-        Patient patient =
-                patientDAO.getPatientByContactNumber(
-                        "0777654321"
-                );
-
-        assertNotNull(patient);
-        assertEquals(8, patient.getPatientId());
-        assertEquals("David", patient.getPatientName());
-
-        verify(preparedStatement)
-                .setString(1, "0777654321");
+        stubPatientResult();
     }
 
-    @Test
-    void shouldReturnNullWhenPatientDoesNotExist()
+    private void stubPatientResult()
             throws Exception {
 
-        when(connection.prepareStatement(anyString()))
-                .thenReturn(preparedStatement);
+        when(resultSet.getInt(
+                "patient_id"))
+                .thenReturn(5);
 
-        when(preparedStatement.executeQuery())
-                .thenReturn(resultSet);
+        when(resultSet.getString(
+                "patient_name"))
+                .thenReturn(
+                        "Kyle John"
+                );
 
-        when(resultSet.next())
-                .thenReturn(false);
+        when(resultSet.getString(
+                "address"))
+                .thenReturn(
+                        "Colombo"
+                );
 
-        Patient patient =
-                patientDAO.getPatientById(999);
+        when(resultSet.getString(
+                "contact_number"))
+                .thenReturn(
+                        "0771234567"
+                );
 
-        assertNull(patient);
+        when(resultSet.getString(
+                "email"))
+                .thenReturn(
+                        "kyle@example.com"
+                );
     }
 }

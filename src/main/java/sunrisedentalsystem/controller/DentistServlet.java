@@ -67,12 +67,42 @@ public class DentistServlet extends HttpServlet {
             return;
         }
 
+        String action =
+                request.getParameter(
+                        "action"
+                );
+
         String dentistIdText =
                 request.getParameter(
                         "dentistId"
                 );
 
         try {
+
+            if ("add".equals(action)) {
+
+                if (!"ADMIN".equals(
+                        session.getAttribute("role"))) {
+
+                    response.sendError(
+                            HttpServletResponse
+                                    .SC_FORBIDDEN,
+                            "Admin access required."
+                    );
+
+                    return;
+                }
+
+                request.getRequestDispatcher(
+                        "addDentist.jsp"
+                ).forward(
+                        request,
+                        response
+                );
+
+                return;
+            }
+
 
             if (isEmpty(dentistIdText)) {
 
@@ -95,6 +125,7 @@ public class DentistServlet extends HttpServlet {
                 return;
             }
 
+
             int dentistId =
                     Integer.parseInt(
                             dentistIdText
@@ -110,31 +141,27 @@ public class DentistServlet extends HttpServlet {
                 return;
             }
 
+
             Dentist dentist =
                     dentistService
                             .searchDentist(
                                     dentistId
                             );
 
-            if (dentist != null) {
-
-                request.setAttribute(
-                        "dentist",
-                        dentist
-                );
-
-                request.getRequestDispatcher(
-                        "dentistDetails.jsp"
-                ).forward(
-                        request,
-                        response
-                );
-
-            } else {
+            if (dentist == null) {
 
                 request.setAttribute(
                         "errorMessage",
                         "Dentist not found."
+                );
+
+                List<Dentist> dentists =
+                        dentistService
+                                .getAllDentists();
+
+                request.setAttribute(
+                        "dentists",
+                        dentists
                 );
 
                 request.getRequestDispatcher(
@@ -143,7 +170,75 @@ public class DentistServlet extends HttpServlet {
                         request,
                         response
                 );
+
+                return;
             }
+
+
+            request.setAttribute(
+                    "dentist",
+                    dentist
+            );
+
+
+            // Open Edit Dentist page
+            if ("edit".equals(action)) {
+
+                if (!"ADMIN".equals(
+                        session.getAttribute("role"))) {
+
+                    response.sendError(
+                            HttpServletResponse
+                                    .SC_FORBIDDEN,
+                            "Admin access required."
+                    );
+
+                    return;
+                }
+
+                request.getRequestDispatcher(
+                        "editDentist.jsp"
+                ).forward(
+                        request,
+                        response
+                );
+
+                return;
+            }
+            
+         // Open Delete Dentist confirmation page
+            if ("delete".equals(action)) {
+
+                if (!"ADMIN".equals(
+                        session.getAttribute("role"))) {
+
+                    response.sendError(
+                            HttpServletResponse.SC_FORBIDDEN,
+                            "Admin access required."
+                    );
+
+                    return;
+                }
+
+                request.getRequestDispatcher(
+                        "deleteDentist.jsp"
+                ).forward(
+                        request,
+                        response
+                );
+
+                return;
+            }
+
+
+            // Normal dentist details
+            request.getRequestDispatcher(
+                    "dentistDetails.jsp"
+            ).forward(
+                    request,
+                    response
+            );
+
 
         } catch (NumberFormatException e) {
 

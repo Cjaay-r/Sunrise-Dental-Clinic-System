@@ -9,6 +9,8 @@ import java.sql.Statement;
 import java.sql.Time;
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.util.ArrayList;
+import java.util.List;
 
 import sunrisedentalsystem.model.Appointment;
 import sunrisedentalsystem.model.AppointmentStatus;
@@ -17,73 +19,87 @@ import sunrisedentalsystem.model.Patient;
 import sunrisedentalsystem.model.Treatment;
 import sunrisedentalsystem.util.DatabaseConnection;
 
-public class AppointmentDAOImpl implements AppointmentDAO {
+public class AppointmentDAOImpl
+        implements AppointmentDAO {
 
     @Override
     public boolean addAppointment(
             Appointment appointment,
-            int staffId) throws SQLException {
+            int userId)
+            throws SQLException {
 
         String sql =
                 "INSERT INTO appointment " +
                 "(patient_id, treatment_id, appointment_date, " +
                 "appointment_time, status, dentist_id, staff_id) " +
-                "VALUES (?, ?, ?, ?, ?, ?, ?)";
+                "VALUES (?, ?, ?, ?, ?, ?, " +
+                "(SELECT staff_id FROM staff WHERE user_id = ?))";
 
         try (Connection connection =
-                DatabaseConnection.getConnection();
+                     DatabaseConnection.getConnection();
 
              PreparedStatement statement =
-                connection.prepareStatement(
-                        sql,
-                        Statement.RETURN_GENERATED_KEYS
-                )) {
+                     connection.prepareStatement(
+                             sql,
+                             Statement.RETURN_GENERATED_KEYS
+                     )) {
 
             statement.setInt(
                     1,
-                    appointment.getPatient().getPatientId()
+                    appointment
+                            .getPatient()
+                            .getPatientId()
             );
 
             statement.setInt(
                     2,
-                    appointment.getTreatment().getTreatmentId()
+                    appointment
+                            .getTreatment()
+                            .getTreatmentId()
             );
 
             statement.setDate(
                     3,
                     Date.valueOf(
-                            appointment.getAppointmentDate()
+                            appointment
+                                    .getAppointmentDate()
                     )
             );
 
             statement.setTime(
                     4,
                     Time.valueOf(
-                            appointment.getAppointmentTime()
+                            appointment
+                                    .getAppointmentTime()
                     )
             );
 
             statement.setString(
                     5,
-                    appointment.getStatus().name()
+                    appointment
+                            .getStatus()
+                            .name()
             );
 
             statement.setInt(
                     6,
-                    appointment.getDentist().getDentistId()
+                    appointment
+                            .getDentist()
+                            .getDentistId()
             );
 
             statement.setInt(
                     7,
-                    staffId
+                    userId
             );
 
-            int rowsAffected = statement.executeUpdate();
+            int rowsAffected =
+                    statement.executeUpdate();
 
             if (rowsAffected > 0) {
 
                 try (ResultSet generatedKeys =
-                        statement.getGeneratedKeys()) {
+                             statement.getGeneratedKeys()) {
 
                     if (generatedKeys.next()) {
 
@@ -104,7 +120,8 @@ public class AppointmentDAOImpl implements AppointmentDAO {
 
     @Override
     public Appointment getAppointmentByNumber(
-            String appointmentNo) throws SQLException {
+            String appointmentNo)
+            throws SQLException {
 
         String sql =
                 "SELECT " +
@@ -112,117 +129,104 @@ public class AppointmentDAOImpl implements AppointmentDAO {
                 "a.appointment_date, " +
                 "a.appointment_time, " +
                 "a.status, " +
-
                 "p.patient_id, " +
                 "p.patient_name, " +
                 "p.address, " +
                 "p.contact_number, " +
-
                 "d.dentist_id, " +
                 "d.dentist_name, " +
-
                 "t.treatment_id, " +
                 "t.treatment_type, " +
                 "t.treatment_price " +
-
                 "FROM appointment a " +
-
                 "JOIN patient p " +
                 "ON a.patient_id = p.patient_id " +
-
                 "JOIN dentist d " +
                 "ON a.dentist_id = d.dentist_id " +
-
                 "JOIN treatment t " +
                 "ON a.treatment_id = t.treatment_id " +
-
                 "WHERE a.appointment_no = ?";
 
         try (Connection connection =
-                DatabaseConnection.getConnection();
+                     DatabaseConnection.getConnection();
 
              PreparedStatement statement =
-                connection.prepareStatement(sql)) {
+                     connection.prepareStatement(sql)) {
 
             statement.setInt(
                     1,
-                    Integer.parseInt(appointmentNo)
+                    Integer.parseInt(
+                            appointmentNo
+                    )
             );
 
             try (ResultSet resultSet =
-                    statement.executeQuery()) {
+                         statement.executeQuery()) {
 
                 if (resultSet.next()) {
 
-                    Patient patient =
-                            new Patient(
-                                    resultSet.getInt(
-                                            "patient_id"
-                                    ),
-                                    resultSet.getString(
-                                            "patient_name"
-                                    ),
-                                    resultSet.getString(
-                                            "address"
-                                    ),
-                                    resultSet.getString(
-                                            "contact_number"
-                                    )
-                            );
-
-                    Dentist dentist =
-                            new Dentist(
-                                    resultSet.getInt(
-                                            "dentist_id"
-                                    ),
-                                    resultSet.getString(
-                                            "dentist_name"
-                                    )
-                            );
-
-                    Treatment treatment =
-                            new Treatment(
-                                    resultSet.getInt(
-                                            "treatment_id"
-                                    ),
-                                    resultSet.getString(
-                                            "treatment_type"
-                                    ),
-                                    resultSet.getDouble(
-                                            "treatment_price"
-                                    )
-                            );
-
-                    return new Appointment(
-                            String.valueOf(
-                                    resultSet.getInt(
-                                            "appointment_no"
-                                    )
-                            ),
-
-                            resultSet.getDate(
-                                    "appointment_date"
-                            ).toLocalDate(),
-
-                            resultSet.getTime(
-                                    "appointment_time"
-                            ).toLocalTime(),
-
-                            AppointmentStatus.valueOf(
-                                    resultSet.getString(
-                                            "status"
-                                    )
-                            ),
-
-                            patient,
-                            dentist,
-                            treatment
+                    return createAppointment(
+                            resultSet
                     );
                 }
             }
         }
 
         return null;
+    }
+
+    @Override
+    public List<Appointment> getAllAppointments()
+            throws SQLException {
+
+        String sql =
+                "SELECT " +
+                "a.appointment_no, " +
+                "a.appointment_date, " +
+                "a.appointment_time, " +
+                "a.status, " +
+                "p.patient_id, " +
+                "p.patient_name, " +
+                "p.address, " +
+                "p.contact_number, " +
+                "d.dentist_id, " +
+                "d.dentist_name, " +
+                "t.treatment_id, " +
+                "t.treatment_type, " +
+                "t.treatment_price " +
+                "FROM appointment a " +
+                "JOIN patient p " +
+                "ON a.patient_id = p.patient_id " +
+                "JOIN dentist d " +
+                "ON a.dentist_id = d.dentist_id " +
+                "JOIN treatment t " +
+                "ON a.treatment_id = t.treatment_id " +
+                "ORDER BY a.appointment_date ASC, " +
+                "a.appointment_time ASC";
+
+        List<Appointment> appointments =
+                new ArrayList<>();
+
+        try (Connection connection =
+                     DatabaseConnection.getConnection();
+
+             PreparedStatement statement =
+                     connection.prepareStatement(sql);
+
+             ResultSet resultSet =
+                     statement.executeQuery()) {
+
+            while (resultSet.next()) {
+
+                appointments.add(
+                        createAppointment(
+                                resultSet
+                        )
+                );
+            }
+        }
+
+        return appointments;
     }
 
     @Override
@@ -241,10 +245,10 @@ public class AppointmentDAOImpl implements AppointmentDAO {
                 "AND status <> 'CANCELLED'";
 
         try (Connection connection =
-                DatabaseConnection.getConnection();
+                     DatabaseConnection.getConnection();
 
              PreparedStatement statement =
-                connection.prepareStatement(sql)) {
+                     connection.prepareStatement(sql)) {
 
             statement.setInt(
                     1,
@@ -253,26 +257,122 @@ public class AppointmentDAOImpl implements AppointmentDAO {
 
             statement.setDate(
                     2,
-                    Date.valueOf(appointmentDate)
+                    Date.valueOf(
+                            appointmentDate
+                    )
             );
 
             statement.setTime(
                     3,
-                    Time.valueOf(appointmentTime)
+                    Time.valueOf(
+                            appointmentTime
+                    )
             );
 
             try (ResultSet resultSet =
-                    statement.executeQuery()) {
+                         statement.executeQuery()) {
 
                 if (resultSet.next()) {
 
-                    int count = resultSet.getInt(1);
-
-                    return count == 0;
+                    return resultSet.getInt(1) == 0;
                 }
             }
         }
 
         return false;
+    }
+
+    @Override
+    public boolean cancelAppointment(
+            String appointmentNo)
+            throws SQLException {
+
+        String sql =
+                "UPDATE appointment " +
+                "SET status = 'CANCELLED' " +
+                "WHERE appointment_no = ? " +
+                "AND status <> 'CANCELLED'";
+
+        try (Connection connection =
+                     DatabaseConnection.getConnection();
+
+             PreparedStatement statement =
+                     connection.prepareStatement(sql)) {
+
+            statement.setInt(
+                    1,
+                    Integer.parseInt(
+                            appointmentNo
+                    )
+            );
+
+            return statement.executeUpdate() > 0;
+        }
+    }
+
+    private Appointment createAppointment(
+            ResultSet resultSet)
+            throws SQLException {
+
+        Patient patient =
+                new Patient(
+                        resultSet.getInt(
+                                "patient_id"
+                        ),
+                        resultSet.getString(
+                                "patient_name"
+                        ),
+                        resultSet.getString(
+                                "address"
+                        ),
+                        resultSet.getString(
+                                "contact_number"
+                        )
+                );
+
+        Dentist dentist =
+                new Dentist(
+                        resultSet.getInt(
+                                "dentist_id"
+                        ),
+                        resultSet.getString(
+                                "dentist_name"
+                        )
+                );
+
+        Treatment treatment =
+                new Treatment(
+                        resultSet.getInt(
+                                "treatment_id"
+                        ),
+                        resultSet.getString(
+                                "treatment_type"
+                        ),
+                        resultSet.getDouble(
+                                "treatment_price"
+                        )
+                );
+
+        return new Appointment(
+                String.valueOf(
+                        resultSet.getInt(
+                                "appointment_no"
+                        )
+                ),
+                resultSet.getDate(
+                        "appointment_date"
+                ).toLocalDate(),
+                resultSet.getTime(
+                        "appointment_time"
+                ).toLocalTime(),
+                AppointmentStatus.valueOf(
+                        resultSet.getString(
+                                "status"
+                        )
+                ),
+                patient,
+                dentist,
+                treatment
+        );
     }
 }
